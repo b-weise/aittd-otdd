@@ -13,5 +13,5 @@ class MultiRotatingLogger:
         self.__validate_configs()
 
     def __validate_configs(self):
-        if len(self.__configs.values()) == 0:
-            raise InvalidConfigsException('Configs dict is empty.')
+        if len(self.__configs) == 0:
+            raise InvalidConfigsException('Configs is empty.')

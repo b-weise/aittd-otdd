@@ -8,7 +8,7 @@ def new_instance():
 
 
 @pytest.mark.parametrize('configs,expected_exception', [
-    ({}, InvalidConfigsException()),
+    ([], InvalidConfigsException()),
 ])
 def test_instantiation_bad_input(configs, expected_exception):
     """Test that the expected exceptions are thrown."""
@@ -21,7 +21,7 @@ def test_instantiation_bad_input(configs, expected_exception):
 
 
 @pytest.mark.parametrize('configs', [
-    ({'name': 'name_test_000'}),
+    ([{'name': 'name_test_000'}]),
 ])
 def test_instantiation_success(configs):
     """Test successful instantiation."""
