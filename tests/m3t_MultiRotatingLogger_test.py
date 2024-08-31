@@ -9,6 +9,21 @@ def new_instance():
 
 @pytest.mark.parametrize('configs,expected_exception', [
     ([], InvalidConfigsException()),
+    ('aaa', InvalidConfigsException()),
+    (123, InvalidConfigsException()),
+    ({}, InvalidConfigsException()),
+    ({'name': 'asdf'}, InvalidConfigsException()),
+    (['aaa'], InvalidConfigsException()),
+    ([123], InvalidConfigsException()),
+    ([{}], InvalidConfigsException()),
+    ([{}, 1234], InvalidConfigsException()),
+    ([{}, 'asdf'], InvalidConfigsException()),
+    ([{}, {}], InvalidConfigsException()),
+    ([{'name': 1234}], InvalidConfigsException()),
+    ([{'name': {}}], InvalidConfigsException()),
+    ([{'name': [1, 2, 3]}], InvalidConfigsException()),
+    ([{}, {'name': 'asdf'}], InvalidConfigsException()),
+    ([{'name': 'asdf'}, {'name': ['a', 's', 'd']}], InvalidConfigsException()),
 ])
 def test_instantiation_bad_input(configs, expected_exception):
     """Test that the expected exceptions are thrown."""
@@ -22,6 +37,7 @@ def test_instantiation_bad_input(configs, expected_exception):
 
 @pytest.mark.parametrize('configs', [
     ([{'name': 'name_test_000'}]),
+    ([{'name': 'name_test_000'}, {'name': 'name_test_001'}]),
 ])
 def test_instantiation_success(configs):
     """Test successful instantiation."""
