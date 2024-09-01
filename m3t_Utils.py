@@ -38,7 +38,9 @@ class Validation:
         """
         self.type(expected_range, tuple)
         if len(expected_range) != 2:
-            raise InvalidLengthException(f'The expected_range parameter should be a tuple containing [from, to); None means no limit in that direction.')
+            raise InvalidLengthException(
+                f'The expected_range parameter should be a tuple containing [from, to); None means no limit in that direction.'
+            )
 
         object_length = len(object_to_validate)
         min_length = expected_range[0]
@@ -48,18 +50,23 @@ class Validation:
             self.type(min_length, int)
             self.type(max_length, int)
             if min_length >= max_length:
-                raise InvalidRangeException(f'The minimum value provided ({min_length}) must be lower than the maximum value provided ({max_length}).')
+                raise InvalidRangeException(
+                    f'The minimum value provided ({min_length}) must be lower than the maximum value provided ({max_length}).'
+                )
 
         if min_length is not None:
             self.type(min_length, int)
             if object_length < min_length:
-                raise InvalidLengthException(f'Object length ({object_length}) is below the minimum expected ({min_length}).')
+                raise InvalidLengthException(
+                    f'Object length ({object_length}) is below the minimum expected ({min_length}).'
+                )
 
         if max_length is not None:
             self.type(max_length, int)
             if object_length >= max_length:
-                raise InvalidLengthException(f'Object length ({object_length}) is above the maximum expected ({max_length}).')
-
+                raise InvalidLengthException(
+                    f'Object length ({object_length}) is above the maximum expected ({max_length}).'
+                )
 
     def recursive_validation(self, objects, validations: dict):
         """
