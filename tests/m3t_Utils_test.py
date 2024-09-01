@@ -79,3 +79,48 @@ def test_length_failure(new_instance, object_to_validate, expected_range, expect
 ])
 def test_length_success(new_instance, object_to_validate, expected_range):
     new_instance.length(object_to_validate, expected_range)
+
+
+@pytest.mark.parametrize('objects,validations,expected_exception', [
+    (1, {}, TypeError()),
+    (True, {}, TypeError()),
+    ([], 1, InvalidTypeException()),
+    ([], False, InvalidTypeException()),
+    ([1, {}], {'type': {'expected_type': int}}, InvalidTypeException()),
+    (['asdf'], {'type': {'expected_type': dict}}, InvalidTypeException()),
+    (['asdf'], {'length': {'expected_range': (None, 3)}}, InvalidLengthException()),
+    (['asdf', 'asd', 'asdfgh'], {'length': {'expected_range': (3, 6)}}, InvalidLengthException()),
+    (['asdf', 'asd', 'asdfgh'], {
+        'type': {'expected_type': str},
+        'length': {'expected_range': (3, 6)},
+    }, InvalidLengthException()),
+    (['asdf', 'asd', 'asdfgh', [1, 2, 3]], {
+        'type': {'expected_type': str},
+        'length': {'expected_range': (3, 7)},
+    }, InvalidTypeException()),
+    (['asdf', 'asd', 'asdfgh', [1, 2, 3]], {
+        'length': {'expected_range': (3, 7)},
+        'type': {'expected_type': str},
+    }, InvalidTypeException()),
+    (['asdf', 'asd', 'asdfgh', 1], {
+        'length': {'expected_range': (3, 7)},
+        'type': {'expected_type': str},
+    }, TypeError()),
+])
+def test_recursive_validation_failure(new_instance, objects, validations, expected_exception):
+    try:
+        new_instance.recursive_validation(objects, validations)
+    except (TypeError, InvalidTypeException, InvalidLengthException) as current_exception:
+        assert isinstance(current_exception, type(expected_exception))
+    else:
+        pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
+
+
+@pytest.mark.parametrize('objects,validations', [
+    ([], {}),
+    ([1, 2], {'type': {'expected_type': int}}),
+    (['asdf', 'asd', 'asdfgh'], {'length': {'expected_range': (3, 7)}}),
+    (['asdf', 'asd', 'asdfgh'], {'type': {'expected_type': str}, 'length': {'expected_range': (3, 7)}}),
+])
+def test_recursive_validation_success(new_instance, objects, validations):
+    new_instance.recursive_validation(objects, validations)

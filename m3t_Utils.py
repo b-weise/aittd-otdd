@@ -59,3 +59,17 @@ class Validation:
             self.type(max_length, int)
             if object_length >= max_length:
                 raise InvalidLengthException(f'Object length ({object_length}) is above the maximum expected ({max_length}).')
+
+
+    def recursive_validation(self, objects, validations: dict):
+        """
+        Checks specified validations against each item in objects.
+        :param objects: An iterable of objects to be validated.
+        :param validations: A dict containing Validation method names (i.e. "type") as keys
+        and dicts of parameters as their respective method arguments, not including "object_to_validate",
+        as every item will be passed in its place.
+        """
+        self.type(validations, dict)
+        for object_to_validate in objects:
+            for method_name, method_arguments in validations.items():
+                getattr(self, method_name)(object_to_validate, **method_arguments)
