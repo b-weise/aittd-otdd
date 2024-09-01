@@ -25,7 +25,7 @@ def new_instance():
     ([{}, {'name': 'asdf'}], InvalidConfigsException()),
     ([{'name': 'asdf'}, {'name': ['a', 's', 'd']}], InvalidConfigsException()),
 ])
-def test_instantiation_bad_input(configs, expected_exception):
+def test_instantiation_failure(configs, expected_exception):
     """Test that the expected exceptions are thrown."""
     try:
         MultiRotatingLogger(configs)
