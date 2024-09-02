@@ -39,11 +39,11 @@ class Validation:
         :param expected_type: The type that is expected.
         :param reversed_validation: If this is a truthy value, the validation is reversed.
         """
-        validation_result = isinstance(object_to_validate, expected_type)
+        object_is_instance = isinstance(object_to_validate, expected_type)
 
-        if not reversed_validation and not validation_result:
+        if not reversed_validation and not object_is_instance:  # plain (non-reversed) validation failure
             raise InvalidTypeException(f'Object must be of type: {expected_type.__name__}.')
-        if reversed_validation and validation_result:
+        if reversed_validation and object_is_instance:  # reversed validation failure
             raise InvalidTypeException(f'Object must not be of type: {expected_type.__name__}.')
 
     def length(self, object_to_validate, expected_range: tuple):
@@ -115,12 +115,12 @@ class Validation:
         self.type(validations, dict)
         self.type(reversed_validation, bool)
 
-        validation_result = key_name in object_to_validate
+        key_is_present = key_name in object_to_validate
 
-        if not reversed_validation and not validation_result:
-            raise KeyExistenceException(f'Compulsory key \"{key_name}\" was not found.')
-        if reversed_validation and validation_result:
+        if not reversed_validation:
+            if key_is_present:  # plain (non-reversed) validation success
+                self.__validate_from_dict(object_to_validate[key_name], validations)
+            else:  # plain (non-reversed) validation failure
+                raise KeyExistenceException(f'Expected key \"{key_name}\" was not found.')
+        if reversed_validation and key_is_present:  # reversed validation failure
             raise KeyExistenceException(f'Unexpected key \"{key_name}\" was found.')
-
-        if not reversed_validation and validation_result:
-            self.__validate_from_dict(object_to_validate[key_name], validations)
