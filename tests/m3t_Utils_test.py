@@ -1,5 +1,7 @@
 import pytest
-from m3t_Utils import Validation, InvalidTypeException, InvalidLengthException, InvalidRangeException
+
+from m3t_Utils import Validation, InvalidTypeException, InvalidLengthException, InvalidRangeException, \
+    KeyExistenceException
 
 
 @pytest.fixture
@@ -124,3 +126,39 @@ def test_recursive_validation_failure(new_instance, objects, validations, expect
 ])
 def test_recursive_validation_success(new_instance, objects, validations):
     new_instance.recursive_validation(objects, validations)
+
+
+@pytest.mark.parametrize('object_to_validate,key_name,validations,reversed_validation,expected_exception', [
+    (1, 'asdf', {}, False, InvalidTypeException()),
+    ({}, 1, {}, False, InvalidTypeException()),
+    ({}, 'asdf', [], False, InvalidTypeException()),
+    ({}, 'asdf', {}, 1, InvalidTypeException()),
+    ({}, '', {}, False, InvalidLengthException()),
+    ({}, 'asdf', {}, False, KeyExistenceException()),
+    ({'zxcv': None}, 'asdf', {}, False, KeyExistenceException()),
+    ({'asdf': None}, 'asdf', {}, True, KeyExistenceException()),
+    ({'asdf': 123}, 'asdf', {'type': {'expected_type': str}}, False, InvalidTypeException()),
+    ({'asdf': 123}, 'asdf', {'type': {'expected_type': int, 'reversed_validation': True}}, False, InvalidTypeException()),
+])
+def test_key_existence_failure(
+        new_instance, object_to_validate, key_name, validations, reversed_validation, expected_exception
+):
+    try:
+        new_instance.key_existence(object_to_validate, key_name, validations, reversed_validation)
+    except (InvalidTypeException, InvalidLengthException, KeyExistenceException) as current_exception:
+        assert isinstance(current_exception, type(expected_exception))
+    else:
+        pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
+
+
+@pytest.mark.parametrize('object_to_validate,key_name,validations,reversed_validation', [
+    ({'asdf': None}, 'asdf', {}, False),
+    ({'zxcv': None}, 'asdf', {}, True),
+    ({}, 'asdf', {}, True),
+    ({'asdf': 123}, 'asdf', {'type': {'expected_type': int}}, False),
+    ({'asdf': 123}, 'asdf', {'type': {'expected_type': int, 'reversed_validation': False}}, False),
+])
+def test_key_existence_success(
+        new_instance, object_to_validate, key_name, validations, reversed_validation
+):
+    new_instance.key_existence(object_to_validate, key_name, validations, reversed_validation)

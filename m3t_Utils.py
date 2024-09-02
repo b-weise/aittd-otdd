@@ -10,6 +10,10 @@ class InvalidRangeException(Exception):
     pass
 
 
+class KeyExistenceException(Exception):
+    pass
+
+
 class Validation:
     """
     A set of generic validation methods.
@@ -30,7 +34,7 @@ class Validation:
 
     def type(self, object_to_validate, expected_type: type, reversed_validation: bool = False):
         """
-        Checks the object type against the type provided.
+        Checks the object type against the provided type.
         :param object_to_validate: An object of any type, to be validated.
         :param expected_type: The type that is expected.
         :param reversed_validation: If this is a truthy value, the validation is reversed.
@@ -91,3 +95,32 @@ class Validation:
         self.type(validations, dict)
         for object_to_validate in objects:
             self.__validate_from_dict(object_to_validate, validations)
+
+    def key_existence(
+            self, object_to_validate: dict, key_name: str, validations: dict = {}, reversed_validation: bool = False
+    ):
+        """
+        Checks that the specified key exists in the provided dictionary.
+        :param object_to_validate: An object of any type, to be validated.
+        :param key_name: The name of the dictionary key to validate.
+        :param validations: A dict containing Validation method names (i.e. "type") as keys
+        and dicts of parameters as their respective method arguments, not including "object_to_validate",
+        as every item will be passed in its place.
+        :param reversed_validation: If this is a truthy value, the validation is reversed,
+        i.e. key_name is NOT expected to be found.
+        """
+        self.type(object_to_validate, dict)
+        self.type(key_name, str)
+        self.length(key_name, (1, None))
+        self.type(validations, dict)
+        self.type(reversed_validation, bool)
+
+        validation_result = key_name in object_to_validate
+
+        if not reversed_validation and not validation_result:
+            raise KeyExistenceException(f'Compulsory key \"{key_name}\" not found.')
+        if reversed_validation and validation_result:
+            raise KeyExistenceException(f'Unexpected key \"{key_name}\" was found.')
+
+        if not reversed_validation and validation_result:
+            self.__validate_from_dict(object_to_validate[key_name], validations)
