@@ -36,10 +36,11 @@ class Validation:
         :param reversed_validation: If this is a truthy value, the validation is reversed.
         """
         validation_result = isinstance(object_to_validate, expected_type)
-        if reversed_validation:
-            validation_result = not validation_result
-        if not validation_result:
+
+        if not reversed_validation and not validation_result:
             raise InvalidTypeException(f'Object must be of type: {expected_type.__name__}.')
+        if reversed_validation and validation_result:
+            raise InvalidTypeException(f'Object must NOT be of type: {expected_type.__name__}.')
 
     def length(self, object_to_validate, expected_range: tuple):
         """
