@@ -108,11 +108,31 @@ def test_length_success(new_instance, object_to_validate, expected_range):
         'length': {'expected_range': (3, 7)},
         'type': {'expected_type': str},
     }, TypeError()),
+    ([{'aaa': 111, 'bbb': 222, 'ccc': 333}], {
+        'type': {'expected_type': dict},
+        'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
+    }, KeyExistenceException()),
+    ([{'aaa': 111}, {'bbb': 222}, {'ccc': 333}], {
+        'type': {'expected_type': dict},
+        'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
+    }, KeyExistenceException()),
+    ([{'aaa': 111}, {'bbb': 222}, {'ccc': 333}], {
+        'type': {'expected_type': dict},
+        'key_existence': {'key_name': 'bbb'},
+    }, KeyExistenceException()),
+    ([{'aaa': 111}, {'aaa': 222}, {'aaa': [3]}], {
+        'type': {'expected_type': dict},
+        'key_existence': {'key_name': 'aaa', 'validations': {'type': {'expected_type': int}}},
+    }, InvalidTypeException()),
+    ([{'aaa': [1, 1, 1, 1, 1]}, {'aaa': [2, 2, 2, 2, 2, 2]}, {'aaa': [3, 3, 3]}], {
+        'type': {'expected_type': dict},
+        'key_existence': {'key_name': 'aaa', 'validations': {'length': {'expected_range': (5, None)}}},
+    }, InvalidLengthException()),
 ])
 def test_recursive_validation_failure(new_instance, objects, validations, expected_exception):
     try:
         new_instance.recursive_validation(objects, validations)
-    except (TypeError, InvalidTypeException, InvalidLengthException) as current_exception:
+    except (TypeError, InvalidTypeException, InvalidLengthException, KeyExistenceException) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
         pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
@@ -123,6 +143,10 @@ def test_recursive_validation_failure(new_instance, objects, validations, expect
     ([1, 2], {'type': {'expected_type': int}}),
     (['asdf', 'asd', 'asdfgh'], {'length': {'expected_range': (3, 7)}}),
     (['asdf', 'asd', 'asdfgh'], {'type': {'expected_type': str}, 'length': {'expected_range': (3, 7)}}),
+    ([{'aaa': 111}, {'aaa': 222}, {'aaa': 333}], {
+        'type': {'expected_type': dict},
+        'key_existence': {'key_name': 'aaa', 'reversed_validation': False},
+    }),
 ])
 def test_recursive_validation_success(new_instance, objects, validations):
     new_instance.recursive_validation(objects, validations)
