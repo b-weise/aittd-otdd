@@ -1,4 +1,8 @@
-class InvalidTypeException(Exception):
+class UnexpectedTypeException(Exception):
+    pass
+
+
+class ExpectedTypeException(Exception):
     pass
 
 
@@ -42,9 +46,9 @@ class Validation:
         object_is_instance = isinstance(object_to_validate, expected_type)
 
         if not reversed_validation and not object_is_instance:  # plain (non-reversed) validation failure
-            raise InvalidTypeException(f'Object must be of type: {expected_type.__name__}.')
+            raise ExpectedTypeException(f'Object must be of type: {expected_type.__name__}.')
         if reversed_validation and object_is_instance:  # reversed validation failure
-            raise InvalidTypeException(f'Object must not be of type: {expected_type.__name__}.')
+            raise UnexpectedTypeException(f'Object must not be of type: {expected_type.__name__}.')
 
     def length(self, object_to_validate, expected_range: tuple):
         """
