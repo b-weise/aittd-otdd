@@ -25,8 +25,10 @@ def test_instantiation_failure(configs, expected_exception):
 
 
 @pytest.mark.parametrize('configs', [
+    ([{'name': 'a'}]),
     ([{'name': 'name_test_000'}]),
     ([{'name': 'name_test_000'}, {'name': 'name_test_001'}]),
+    (({'name': 'name_test_000'}, {'name': 'name_test_001'})),
 ])
 def test_instantiation_success(configs):
     MultiRotatingLogger(configs)
