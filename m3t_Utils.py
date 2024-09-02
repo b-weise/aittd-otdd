@@ -22,7 +22,11 @@ class InvalidRangeValuesException(Exception):
     pass
 
 
-class KeyExistenceException(Exception):
+class UnexpectedKeyException(Exception):
+    pass
+
+
+class ExpectedKeyException(Exception):
     pass
 
 
@@ -133,6 +137,6 @@ class Validation:
             if key_is_present:  # plain (non-reversed) validation success
                 self.__validate_from_dict(object_to_validate[key_name], validations)
             else:  # plain (non-reversed) validation failure
-                raise KeyExistenceException(f'Expected key \"{key_name}\" was not found.')
+                raise ExpectedKeyException(f'Expected key \"{key_name}\" was not found.')
         if reversed_validation and key_is_present:  # reversed validation failure
-            raise KeyExistenceException(f'Unexpected key \"{key_name}\" was found.')
+            raise UnexpectedKeyException(f'Unexpected key \"{key_name}\" was found.')

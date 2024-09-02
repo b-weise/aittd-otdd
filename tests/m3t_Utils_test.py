@@ -2,7 +2,7 @@ import pytest
 
 from m3t_Utils import (Validation, UnexpectedTypeException, ExpectedTypeException, MinimumLengthException,
                        MaximumLengthException, InvalidRangeLengthException, InvalidRangeValuesException,
-                       KeyExistenceException)
+                       UnexpectedKeyException, ExpectedKeyException)
 
 
 @pytest.fixture
@@ -114,15 +114,15 @@ def test_length_success(new_instance, object_to_validate, expected_range):
     ([{'aaa': 111, 'bbb': 222, 'ccc': 333}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
-    }, KeyExistenceException()),
+    }, UnexpectedKeyException()),
     ([{'aaa': 111}, {'bbb': 222}, {'ccc': 333}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
-    }, KeyExistenceException()),
+    }, UnexpectedKeyException()),
     ([{'aaa': 111}, {'bbb': 222}, {'ccc': 333}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'bbb'},
-    }, KeyExistenceException()),
+    }, ExpectedKeyException()),
     ([{'aaa': 111}, {'aaa': 222}, {'aaa': [3]}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'aaa', 'validations': {'type': {'expected_type': int}}},
@@ -136,7 +136,7 @@ def test_recursive_validation_failure(new_instance, objects, validations, expect
     try:
         new_instance.recursive_validation(objects, validations)
     except (TypeError, ExpectedTypeException, MinimumLengthException, MaximumLengthException,
-            KeyExistenceException) as current_exception:
+            UnexpectedKeyException, ExpectedKeyException) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
         pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
@@ -166,9 +166,9 @@ def test_recursive_validation_success(new_instance, objects, validations):
     ({}, 'asdf', [], False, ExpectedTypeException()),
     ({}, 'asdf', {}, 1, ExpectedTypeException()),
     ({}, '', {}, False, MinimumLengthException()),
-    ({}, 'asdf', {}, False, KeyExistenceException()),
-    ({'zxcv': None}, 'asdf', {}, False, KeyExistenceException()),
-    ({'asdf': None}, 'asdf', {}, True, KeyExistenceException()),
+    ({}, 'asdf', {}, False, ExpectedKeyException()),
+    ({'zxcv': None}, 'asdf', {}, False, ExpectedKeyException()),
+    ({'asdf': None}, 'asdf', {}, True, UnexpectedKeyException()),
     ({'asdf': 123}, 'asdf', {'type': {'expected_type': str}}, False, ExpectedTypeException()),
     ({'asdf': 123}, 'asdf', {'type': {'expected_type': int, 'reversed_validation': True}}, False,
      UnexpectedTypeException()),
@@ -178,8 +178,8 @@ def test_key_existence_failure(
 ):
     try:
         new_instance.key_existence(object_to_validate, key_name, validations, reversed_validation)
-    except (ExpectedTypeException, UnexpectedTypeException, MinimumLengthException, KeyExistenceException
-            ) as current_exception:
+    except (ExpectedTypeException, UnexpectedTypeException, MinimumLengthException, UnexpectedKeyException,
+            ExpectedKeyException) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
         pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
