@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class ConfigsKeyNames:
+class ConfigKeyNames:
     NAME: str = 'name'
     FILENAME: str = 'filename'
     LEVEL: str = 'level'
@@ -33,7 +33,7 @@ class MultiRotatingLogger:
         self.__validation.recursive_validation(configs, validations={
             'type': {'expected_type': dict},
             'key_existence': {
-                'key_name': ConfigsKeyNames.NAME,
+                'key_name': ConfigKeyNames.NAME,
                 'validations': {
                     'type': {'expected_type': str},
                     'length': {'expected_range': (1, None)},
