@@ -44,7 +44,7 @@ class Validation:
         if not reversed_validation and not validation_result:
             raise InvalidTypeException(f'Object must be of type: {expected_type.__name__}.')
         if reversed_validation and validation_result:
-            raise InvalidTypeException(f'Object must NOT be of type: {expected_type.__name__}.')
+            raise InvalidTypeException(f'Object must not be of type: {expected_type.__name__}.')
 
     def length(self, object_to_validate, expected_range: tuple):
         """
@@ -118,7 +118,7 @@ class Validation:
         validation_result = key_name in object_to_validate
 
         if not reversed_validation and not validation_result:
-            raise KeyExistenceException(f'Compulsory key \"{key_name}\" not found.')
+            raise KeyExistenceException(f'Compulsory key \"{key_name}\" was not found.')
         if reversed_validation and validation_result:
             raise KeyExistenceException(f'Unexpected key \"{key_name}\" was found.')
 
