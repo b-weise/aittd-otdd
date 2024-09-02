@@ -1,4 +1,3 @@
-
 class InvalidTypeException(Exception):
     pass
 
@@ -16,6 +15,18 @@ class Validation:
     A set of generic validation methods.
     All exposed methods return nothing. If something is wrong then an exception is thrown.
     """
+
+    def __validate_from_dict(self, object_to_validate, validations: dict):
+        """
+        Validates provided object against the specified validations.
+        Note that argument types are not validated here. That's the caller's job.
+        :param object_to_validate: An object of any type, to be validated.
+        :param validations: A dict containing Validation method names (i.e. "type") as keys
+        and dicts of parameters as their respective method arguments, not including "object_to_validate",
+        as every item will be passed in its place.
+        """
+        for method_name, method_arguments in validations.items():
+            getattr(self, method_name)(object_to_validate, **method_arguments)
 
     def type(self, object_to_validate, expected_type: type, reversed_validation: bool = False):
         """
@@ -78,5 +89,4 @@ class Validation:
         """
         self.type(validations, dict)
         for object_to_validate in objects:
-            for method_name, method_arguments in validations.items():
-                getattr(self, method_name)(object_to_validate, **method_arguments)
+            self.__validate_from_dict(object_to_validate, validations)
