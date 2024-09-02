@@ -147,6 +147,10 @@ def test_recursive_validation_failure(new_instance, objects, validations, expect
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'aaa', 'reversed_validation': False},
     }),
+    (({'aaa': 111}, {'aaa': 222}, {'aaa': 333}), {
+        'type': {'expected_type': dict},
+        'key_existence': {'key_name': 'aaa', 'reversed_validation': False},
+    }),
 ])
 def test_recursive_validation_success(new_instance, objects, validations):
     new_instance.recursive_validation(objects, validations)
