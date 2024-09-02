@@ -1,6 +1,4 @@
-
-class InvalidConfigsException(Exception):
-    pass
+from m3t_Utils import Validation
 
 
 class UnavailableNameException(Exception):
@@ -8,16 +6,25 @@ class UnavailableNameException(Exception):
 
 
 class MultiRotatingLogger:
-    def __init__(self, configs):
-        self.__configs = configs
-        self.__validate_configs()
+    """
+    Builds a logger for each set of specified configs.
+    The loggers will have their unique RotatingFileHandler attached.
+    Each exposed method will accept a logger index. If none is provided,
+    then the message will be sent to all loggers by default.
+    """
 
-    def __validate_configs(self):
-        if type(self.__configs) is not list:
-            raise InvalidConfigsException('Configs must be a list.')
-        if len(self.__configs) == 0:
-            raise InvalidConfigsException('Configs is empty.')
-        if any(map(lambda config: (type(config) is not dict), self.__configs)):
-            raise InvalidConfigsException('Configs must be a populated with one or more dicts.')
-        if any(map(lambda config: (type(config.get('name', None)) is not str or len(config['name']) == 0), self.__configs)):
-            raise InvalidConfigsException('Every config must have at least a "name" property specified as a non empty string.')
+    def __init__(self, configs: list[dict]):
+        self.__validation = Validation()
+
+        self.__validation.recursive_validation(configs, validations={
+            'type': {'expected_type': dict},
+            'key_existence': {
+                'key_name': 'name',
+                'validations': {
+                    'type': {'expected_type': str},
+                    'length': {'expected_range': (1, None)},
+                }
+            },
+        })
+
+        self.__configs = configs
