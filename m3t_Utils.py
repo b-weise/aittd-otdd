@@ -6,11 +6,19 @@ class ExpectedTypeException(Exception):
     pass
 
 
-class InvalidLengthException(Exception):
+class MinimumLengthException(Exception):
     pass
 
 
-class InvalidRangeException(Exception):
+class MaximumLengthException(Exception):
+    pass
+
+
+class InvalidRangeLengthException(Exception):
+    pass
+
+
+class InvalidRangeValuesException(Exception):
     pass
 
 
@@ -58,7 +66,7 @@ class Validation:
         """
         self.type(expected_range, tuple)
         if len(expected_range) != 2:
-            raise InvalidLengthException(
+            raise InvalidRangeLengthException(
                 f'The expected_range parameter should be a tuple containing [from, to); None means no limit in that direction.'
             )
 
@@ -70,21 +78,21 @@ class Validation:
             self.type(min_length, int)
             self.type(max_length, int)
             if min_length >= max_length:
-                raise InvalidRangeException(
+                raise InvalidRangeValuesException(
                     f'The minimum value provided ({min_length}) must be lower than the maximum value provided ({max_length}).'
                 )
 
         if min_length is not None:
             self.type(min_length, int)
             if object_length < min_length:
-                raise InvalidLengthException(
+                raise MinimumLengthException(
                     f'Object length ({object_length}) is below the minimum expected ({min_length}).'
                 )
 
         if max_length is not None:
             self.type(max_length, int)
             if object_length >= max_length:
-                raise InvalidLengthException(
+                raise MaximumLengthException(
                     f'Object length ({object_length}) is above the maximum expected ({max_length}).'
                 )
 

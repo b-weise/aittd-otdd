@@ -1,7 +1,8 @@
 import pytest
 
-from m3t_Utils import Validation, UnexpectedTypeException, ExpectedTypeException, InvalidLengthException, \
-    InvalidRangeException, KeyExistenceException
+from m3t_Utils import (Validation, UnexpectedTypeException, ExpectedTypeException, MinimumLengthException,
+                       MaximumLengthException, InvalidRangeLengthException, InvalidRangeValuesException,
+                       KeyExistenceException)
 
 
 @pytest.fixture
@@ -47,23 +48,25 @@ def test_type_success(new_instance, object_to_validate, reversed_validation, exp
     ([], {}, ExpectedTypeException()),
     ([], 'asdf', ExpectedTypeException()),
     ([], [], ExpectedTypeException()),
-    ([], (), InvalidLengthException()),
-    ([1, 2, 3], (1, 3), InvalidLengthException()),
-    ([1, 2, 3], (None, 3), InvalidLengthException()),
-    ([1, 2, 3], (0, 2), InvalidLengthException()),
-    ([1, 2, 3], (4, None), InvalidLengthException()),
-    ({}, (4, None), InvalidLengthException()),
+    ([], (), InvalidRangeLengthException()),
+    ([1, 2, 3], (1, 3), MaximumLengthException()),
+    ([1, 2, 3], (None, 3), MaximumLengthException()),
+    ([1, 2, 3], (0, 2), MaximumLengthException()),
+    ([1, 2, 3], (4, None), MinimumLengthException()),
+    ({}, (4, None), MinimumLengthException()),
     (1, (4, None), TypeError()),
     (True, (4, None), TypeError()),
     ('asdf', ('', None), ExpectedTypeException()),
     ('asdf', (3, {}), ExpectedTypeException()),
-    ('asdf', (3, 3), InvalidRangeException()),
-    ('asdf', (4, 3), InvalidRangeException()),
+    ('asdf', (3, 3), InvalidRangeValuesException()),
+    ('asdf', (4, 3), InvalidRangeValuesException()),
+    ('asdf', (1, 2, 3), InvalidRangeLengthException()),
 ])
 def test_length_failure(new_instance, object_to_validate, expected_range, expected_exception):
     try:
         new_instance.length(object_to_validate, expected_range)
-    except (ExpectedTypeException, InvalidLengthException, TypeError, InvalidRangeException) as current_exception:
+    except (ExpectedTypeException, MinimumLengthException, MaximumLengthException, TypeError,
+            InvalidRangeValuesException, InvalidRangeLengthException) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
         pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
@@ -90,12 +93,12 @@ def test_length_success(new_instance, object_to_validate, expected_range):
     ([], False, ExpectedTypeException()),
     ([1, {}], {'type': {'expected_type': int}}, ExpectedTypeException()),
     (['asdf'], {'type': {'expected_type': dict}}, ExpectedTypeException()),
-    (['asdf'], {'length': {'expected_range': (None, 3)}}, InvalidLengthException()),
-    (['asdf', 'asd', 'asdfgh'], {'length': {'expected_range': (3, 6)}}, InvalidLengthException()),
+    (['asdf'], {'length': {'expected_range': (None, 3)}}, MaximumLengthException()),
+    (['asdf', 'asd', 'asdfgh'], {'length': {'expected_range': (3, 6)}}, MaximumLengthException()),
     (['asdf', 'asd', 'asdfgh'], {
         'type': {'expected_type': str},
         'length': {'expected_range': (3, 6)},
-    }, InvalidLengthException()),
+    }, MaximumLengthException()),
     (['asdf', 'asd', 'asdfgh', [1, 2, 3]], {
         'type': {'expected_type': str},
         'length': {'expected_range': (3, 7)},
@@ -127,12 +130,13 @@ def test_length_success(new_instance, object_to_validate, expected_range):
     ([{'aaa': [1, 1, 1, 1, 1]}, {'aaa': [2, 2, 2, 2, 2, 2]}, {'aaa': [3, 3, 3]}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'aaa', 'validations': {'length': {'expected_range': (5, None)}}},
-    }, InvalidLengthException()),
+    }, MinimumLengthException()),
 ])
 def test_recursive_validation_failure(new_instance, objects, validations, expected_exception):
     try:
         new_instance.recursive_validation(objects, validations)
-    except (TypeError, ExpectedTypeException, InvalidLengthException, KeyExistenceException) as current_exception:
+    except (TypeError, ExpectedTypeException, MinimumLengthException, MaximumLengthException,
+            KeyExistenceException) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
         pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
@@ -161,7 +165,7 @@ def test_recursive_validation_success(new_instance, objects, validations):
     ({}, 1, {}, False, ExpectedTypeException()),
     ({}, 'asdf', [], False, ExpectedTypeException()),
     ({}, 'asdf', {}, 1, ExpectedTypeException()),
-    ({}, '', {}, False, InvalidLengthException()),
+    ({}, '', {}, False, MinimumLengthException()),
     ({}, 'asdf', {}, False, KeyExistenceException()),
     ({'zxcv': None}, 'asdf', {}, False, KeyExistenceException()),
     ({'asdf': None}, 'asdf', {}, True, KeyExistenceException()),
@@ -174,7 +178,7 @@ def test_key_existence_failure(
 ):
     try:
         new_instance.key_existence(object_to_validate, key_name, validations, reversed_validation)
-    except (ExpectedTypeException, UnexpectedTypeException, InvalidLengthException, KeyExistenceException
+    except (ExpectedTypeException, UnexpectedTypeException, MinimumLengthException, KeyExistenceException
             ) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
