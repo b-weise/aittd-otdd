@@ -8,13 +8,13 @@ def new_instance():
 
 
 @pytest.mark.parametrize('object_to_validate,expected_type,reversed_validation,expected_exception', [
-    ({}, list, None, InvalidTypeException()),
-    ({}, int, None, InvalidTypeException()),
-    ({}, str, None, InvalidTypeException()),
-    ('', dict, None, InvalidTypeException()),
-    ('', list, None, InvalidTypeException()),
-    (0, float, None, InvalidTypeException()),
-    (0.0, int, None, InvalidTypeException()),
+    ({}, list, False, InvalidTypeException()),
+    ({}, int, False, InvalidTypeException()),
+    ({}, str, False, InvalidTypeException()),
+    ('', dict, False, InvalidTypeException()),
+    ('', list, False, InvalidTypeException()),
+    (0, float, False, InvalidTypeException()),
+    (0.0, int, False, InvalidTypeException()),
     (0, int, True, InvalidTypeException()),
     (0.0, float, 1, InvalidTypeException()),
 ])
@@ -28,9 +28,9 @@ def test_type_failure(new_instance, object_to_validate, expected_type, reversed_
 
 
 @pytest.mark.parametrize('object_to_validate,expected_type,reversed_validation', [
-    ({}, dict, None),
-    (0, int, None),
-    (0.0, float, None),
+    ({}, dict, False),
+    (0, int, False),
+    (0.0, float, False),
     (0.0, float, False),
     (0.0, float, 0),
     (0, float, 1),
