@@ -1,7 +1,13 @@
+import logging
+
 import pytest
 
-from m3t_MultiRotatingLogger import MultiRotatingLogger
+from m3t_MultiRotatingLogger import MultiRotatingLogger, UnavailableNameException
 from m3t_Utils import ExpectedTypeException, ExpectedKeyException, MinimumLengthException
+
+
+def get_existent_loggers():
+    return [name for name in logging.root.manager.loggerDict.keys()]
 
 
 @pytest.mark.parametrize('configs,expected_exception', [
@@ -24,11 +30,28 @@ def test_instantiation_failure(configs, expected_exception):
         pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
 
 
-@pytest.mark.parametrize('configs', [
-    ([{'name': 'a'}]),
-    ([{'name': 'name_test_000'}]),
-    ([{'name': 'name_test_000'}, {'name': 'name_test_001'}]),
-    (({'name': 'name_test_000'}, {'name': 'name_test_001'})),
+@pytest.mark.parametrize('logger_names', [
+    (['a']),
+    (['aa']),
+    (['aaa', 'b']),
+    (('aaaa', 'bb')),
 ])
-def test_instantiation_success(configs):
-    MultiRotatingLogger(configs)
+def test_instantiation_success(logger_names):
+    MultiRotatingLogger([{'name': name} for name in logger_names])
+    for name in logger_names:
+        assert name in get_existent_loggers()
+
+
+@pytest.mark.parametrize('logger_name,expected_exception', [
+    ('a111', UnavailableNameException()),
+    ('b222', UnavailableNameException()),
+    ('c333', UnavailableNameException()),
+])
+def test_logger_creation_failure(logger_name, expected_exception):
+    try:
+        logging.getLogger(logger_name)
+        MultiRotatingLogger([{'name': logger_name}])
+    except (UnavailableNameException) as current_exception:
+        assert isinstance(current_exception, type(expected_exception))
+    else:
+        pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')

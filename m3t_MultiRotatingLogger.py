@@ -1,5 +1,7 @@
-from m3t_Utils import Validation
+import logging
 from dataclasses import dataclass
+
+from m3t_Utils import Validation
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,9 @@ class MultiRotatingLogger:
     """
 
     def __init__(self, configs: list[dict]):
+        """
+        :param configs: A list containing a dictionary of configurations for each logger to be created.
+        """
         self.__validation = Validation()
 
         self.__validation.recursive_validation(configs, validations={
@@ -41,4 +46,23 @@ class MultiRotatingLogger:
             },
         })
 
-        self.__configs = configs
+        self.__loggers = []
+        for config in configs:
+            self.__build_logger(config)
+
+    def __get_existent_loggers(self) -> list[str]:
+        """
+        Generates a list of names corresponding to the loggers present in the current runtime.
+        :return: A list of logger names.
+        """
+        return [name for name in logging.root.manager.loggerDict.keys()]
+
+    def __build_logger(self, config: dict):
+        """
+        Creates a logger based on the provided configurations.
+        :param config: A dictionary of configurations for the logger to be created.
+        """
+        if config[ConfigKeyNames.NAME] in self.__get_existent_loggers():
+            raise UnavailableNameException(f'A logger named \"{config[ConfigKeyNames.NAME]}\" already exists.')
+        logger = logging.getLogger(config[ConfigKeyNames.NAME])
+        self.__loggers.append(logger)
