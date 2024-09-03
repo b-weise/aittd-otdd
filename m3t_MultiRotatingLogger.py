@@ -31,7 +31,8 @@ class MultiRotatingLogger:
 
     def __init__(self, configs: list[dict]):
         """
-        :param configs: A list containing a dictionary of configurations for each logger to be created.
+        :param configs: A list containing a dictionary of configurations for each logger to be created. Check
+        ConfigKeyNames.
         """
         self.__validation = Validation()
 
@@ -60,7 +61,7 @@ class MultiRotatingLogger:
     def __build_logger(self, config: dict):
         """
         Creates a logger based on the provided configurations.
-        :param config: A dictionary of configurations for the logger to be created.
+        :param config: A dictionary of configurations for the logger to be created. Check ConfigKeyNames.
         """
         if config[ConfigKeyNames.NAME] in self.__get_existent_loggers():
             raise UnavailableNameException(f'A logger named \"{config[ConfigKeyNames.NAME]}\" already exists.')

@@ -42,16 +42,16 @@ def test_instantiation_success(logger_names):
         assert name in get_existent_loggers()
 
 
-@pytest.mark.parametrize('logger_name,expected_exception', [
-    ('a111', UnavailableNameException()),
-    ('b222', UnavailableNameException()),
-    ('c333', UnavailableNameException()),
+@pytest.mark.parametrize('logger_name', [
+    ('a111'),
+    ('b_2_2_2'),
+    ('c.3.3.3'),
 ])
-def test_logger_creation_failure(logger_name, expected_exception):
+def test_logger_override_exception(logger_name):
     try:
         logging.getLogger(logger_name)
         MultiRotatingLogger([{'name': logger_name}])
-    except (UnavailableNameException) as current_exception:
-        assert isinstance(current_exception, type(expected_exception))
+    except UnavailableNameException as current_exception:
+        assert isinstance(current_exception, type(UnavailableNameException()))
     else:
-        pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
+        pytest.fail(f'Exception \"{type(UnavailableNameException()).__name__}\" was expected, but found none')
