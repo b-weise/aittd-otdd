@@ -48,12 +48,13 @@ class Validation:
         for method_name, method_arguments in validations.items():
             getattr(self, method_name)(object_to_validate, **method_arguments)
 
-    def type(self, object_to_validate, expected_type: type, reversed_validation: bool = False):
+    def __type(self, object_to_validate, expected_type: type, reversed_validation: bool = False):
         """
+        Internal usage only.
         Checks the object type against the provided type.
         :param object_to_validate: An object of any type, to be validated.
         :param expected_type: The type that is expected.
-        :param reversed_validation: If this is a truthy value, the validation is reversed.
+        :param reversed_validation: If True, the validation is reversed.
         """
         object_is_instance = isinstance(object_to_validate, expected_type)
 
@@ -62,13 +63,24 @@ class Validation:
         if reversed_validation and object_is_instance:  # reversed validation failure
             raise ForbiddenTypeException(f'Object must not be of type: {expected_type.__name__}.')
 
+    def type(self, object_to_validate, expected_type: type, reversed_validation: bool = False):
+        """
+        Checks the object type against the provided type.
+        :param object_to_validate: An object of any type, to be validated.
+        :param expected_type: The type that is expected.
+        :param reversed_validation: If True, the validation is reversed.
+        """
+        self.__type(expected_type, type)
+        self.__type(reversed_validation, bool)
+        self.__type(object_to_validate, expected_type, reversed_validation)
+
     def length(self, object_to_validate, expected_range: tuple):
         """
         Checks the length of the object against the expected range.
         :param object_to_validate: An object of any type, to be validated.
         :param expected_range: A tuple in the form [from, to); None means no limit in that direction.
         """
-        self.type(expected_range, tuple)
+        self.__type(expected_range, tuple)
         if len(expected_range) != 2:
             raise InvalidRangeLengthException(
                 f'The expected_range parameter should be a tuple containing [from, to); None means no limit in that direction.'
@@ -79,22 +91,22 @@ class Validation:
         max_length = expected_range[1]
 
         if min_length is not None and max_length is not None:
-            self.type(min_length, int)
-            self.type(max_length, int)
+            self.__type(min_length, int)
+            self.__type(max_length, int)
             if min_length >= max_length:
                 raise InvalidRangeValuesException(
                     f'The minimum value provided ({min_length}) must be lower than the maximum value provided ({max_length}).'
                 )
 
         if min_length is not None:
-            self.type(min_length, int)
+            self.__type(min_length, int)
             if object_length < min_length:
                 raise MinimumLengthException(
                     f'Object length ({object_length}) is below the minimum expected ({min_length}).'
                 )
 
         if max_length is not None:
-            self.type(max_length, int)
+            self.__type(max_length, int)
             if object_length >= max_length:
                 raise MaximumLengthException(
                     f'Object length ({object_length}) is above the maximum expected ({max_length}).'
@@ -108,7 +120,7 @@ class Validation:
         and dicts of parameters as their respective method arguments, not including "object_to_validate",
         as every item will be passed in its place.
         """
-        self.type(validations, dict)
+        self.__type(validations, dict)
         for object_to_validate in objects:
             self.__validate_from_dict(object_to_validate, validations)
 
@@ -122,14 +134,14 @@ class Validation:
         :param validations: A dict containing Validation method names (i.e. "type") as keys
         and dicts of parameters as their respective method arguments, not including "object_to_validate",
         as every item will be passed in its place.
-        :param reversed_validation: If this is a truthy value, the validation is reversed,
+        :param reversed_validation: If True, the validation is reversed,
         i.e. key_name is NOT expected to be found.
         """
-        self.type(object_to_validate, dict)
-        self.type(key_name, str)
+        self.__type(object_to_validate, dict)
+        self.__type(key_name, str)
         self.length(key_name, (1, None))
-        self.type(validations, dict)
-        self.type(reversed_validation, bool)
+        self.__type(validations, dict)
+        self.__type(reversed_validation, bool)
 
         key_is_present = key_name in object_to_validate
 

@@ -11,6 +11,8 @@ def new_instance():
 
 
 @pytest.mark.parametrize('object_to_validate,expected_type,reversed_validation,expected_exception', [
+    pytest.param({}, 111, False, MandatoryTypeException(), id='--- WRONG EXPECTED_TYPE TYPE ---'),
+    pytest.param({}, dict, 1, MandatoryTypeException(), id='--- WRONG REVERSED_VALIDATION TYPE ---'),
     pytest.param({}, list, False, MandatoryTypeException(), id='--- PLAIN (NON-REVERSED) MISMATCHING TYPES ---'),
     pytest.param({}, int, False, MandatoryTypeException()),
     pytest.param({}, str, False, MandatoryTypeException()),
@@ -20,8 +22,6 @@ def new_instance():
     pytest.param(0.0, int, False, MandatoryTypeException()),
     pytest.param(0, int, True, ForbiddenTypeException(), id='--- REVERSED MATCHING TYPES ---'),
     pytest.param({}, dict, True, ForbiddenTypeException()),
-    pytest.param('', float, 0, MandatoryTypeException(), id='--- REVERSED AS INT ---'),
-    pytest.param(0.0, float, 1, ForbiddenTypeException()),
 ])
 def test_type_failure(new_instance, object_to_validate, expected_type, reversed_validation, expected_exception):
     try:
@@ -39,8 +39,6 @@ def test_type_failure(new_instance, object_to_validate, expected_type, reversed_
     pytest.param('', str, False),
     pytest.param('aaa', dict, True, id='--- REVERSED MISMATCHING TYPES ---'),
     pytest.param([], str, True),
-    pytest.param(0.0, float, 0, id='--- REVERSED AS INT ---'),
-    pytest.param('', float, 1),
 ])
 def test_type_success(new_instance, object_to_validate, reversed_validation, expected_type):
     new_instance.type(object_to_validate, expected_type, reversed_validation)
@@ -188,7 +186,8 @@ def test_recursive_validation_success(new_instance, objects, validations):
     pytest.param(1, 'asdf', {}, False, MandatoryTypeException(), id='--- WRONG OBJECT TYPE ---'),
     pytest.param({}, 1, {}, False, MandatoryTypeException(), id='--- WRONG KEY TYPE ---'),
     pytest.param({}, 'asdf', [], False, MandatoryTypeException(), id='--- WRONG VALIDATIONS TYPE ---'),
-    pytest.param({}, 'asdf', {}, 1, MandatoryTypeException(), id='--- WRONG REVERSED TYPE ---'),
+    pytest.param({}, 'asdf', {}, 1, MandatoryTypeException(), id='--- WRONG REVERSED_VALIDATION TYPE ---'),
+    pytest.param({}, 'asdf', {}, 0, MandatoryTypeException()),
     pytest.param({}, '', {}, False, MinimumLengthException(), id='--- EMPTY KEY STRING ---'),
     pytest.param({}, 'asdf', {}, False, MandatoryKeyException(), id='--- PLAIN (NON-REVERSED) VALIDATION ---'),
     pytest.param({'zxcv': None}, 'asdf', {}, False, MandatoryKeyException()),
