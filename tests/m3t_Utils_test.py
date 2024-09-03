@@ -1,8 +1,8 @@
 import pytest
 
-from m3t_Utils import (Validation, UnexpectedTypeException, ExpectedTypeException, MinimumLengthException,
+from m3t_Utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
                        MaximumLengthException, InvalidRangeLengthException, InvalidRangeValuesException,
-                       UnexpectedKeyException, ExpectedKeyException)
+                       ForbiddenKeyException, MandatoryKeyException)
 
 
 @pytest.fixture
@@ -11,22 +11,22 @@ def new_instance():
 
 
 @pytest.mark.parametrize('object_to_validate,expected_type,reversed_validation,expected_exception', [
-    pytest.param({}, list, False, ExpectedTypeException(), id='--- PLAIN (NON-REVERSED) MISMATCHING TYPES ---'),
-    pytest.param({}, int, False, ExpectedTypeException()),
-    pytest.param({}, str, False, ExpectedTypeException()),
-    pytest.param('', dict, False, ExpectedTypeException()),
-    pytest.param('', list, False, ExpectedTypeException()),
-    pytest.param(0, float, False, ExpectedTypeException()),
-    pytest.param(0.0, int, False, ExpectedTypeException()),
-    pytest.param(0, int, True, UnexpectedTypeException(), id='--- REVERSED MATCHING TYPES ---'),
-    pytest.param({}, dict, True, UnexpectedTypeException()),
-    pytest.param('', float, 0, ExpectedTypeException(), id='--- REVERSED AS INT ---'),
-    pytest.param(0.0, float, 1, UnexpectedTypeException()),
+    pytest.param({}, list, False, MandatoryTypeException(), id='--- PLAIN (NON-REVERSED) MISMATCHING TYPES ---'),
+    pytest.param({}, int, False, MandatoryTypeException()),
+    pytest.param({}, str, False, MandatoryTypeException()),
+    pytest.param('', dict, False, MandatoryTypeException()),
+    pytest.param('', list, False, MandatoryTypeException()),
+    pytest.param(0, float, False, MandatoryTypeException()),
+    pytest.param(0.0, int, False, MandatoryTypeException()),
+    pytest.param(0, int, True, ForbiddenTypeException(), id='--- REVERSED MATCHING TYPES ---'),
+    pytest.param({}, dict, True, ForbiddenTypeException()),
+    pytest.param('', float, 0, MandatoryTypeException(), id='--- REVERSED AS INT ---'),
+    pytest.param(0.0, float, 1, ForbiddenTypeException()),
 ])
 def test_type_failure(new_instance, object_to_validate, expected_type, reversed_validation, expected_exception):
     try:
         new_instance.type(object_to_validate, expected_type, reversed_validation)
-    except (ExpectedTypeException, UnexpectedTypeException) as current_exception:
+    except (MandatoryTypeException, ForbiddenTypeException) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
         pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
@@ -49,12 +49,12 @@ def test_type_success(new_instance, object_to_validate, reversed_validation, exp
 @pytest.mark.parametrize('object_to_validate,expected_range,expected_exception', [
     pytest.param(1, (4, None), TypeError(), id='--- WRONG OBJECT TYPE ---'),
     pytest.param(True, (4, None), TypeError()),
-    pytest.param([], 2, ExpectedTypeException(), id='--- WRONG RANGE TYPE ---'),
-    pytest.param([], {}, ExpectedTypeException()),
-    pytest.param([], 'asdf', ExpectedTypeException()),
-    pytest.param([], [], ExpectedTypeException()),
-    pytest.param('asdf', ('', None), ExpectedTypeException(), id='--- WRONG RANGE ELEMENT TYPE ---'),
-    pytest.param('asdf', (3, {}), ExpectedTypeException()),
+    pytest.param([], 2, MandatoryTypeException(), id='--- WRONG RANGE TYPE ---'),
+    pytest.param([], {}, MandatoryTypeException()),
+    pytest.param([], 'asdf', MandatoryTypeException()),
+    pytest.param([], [], MandatoryTypeException()),
+    pytest.param('asdf', ('', None), MandatoryTypeException(), id='--- WRONG RANGE ELEMENT TYPE ---'),
+    pytest.param('asdf', (3, {}), MandatoryTypeException()),
     pytest.param([], (), InvalidRangeLengthException(), id='--- WRONG RANGE LENGTH ---'),
     pytest.param('asdf', (1, 2, 3), InvalidRangeLengthException()),
     pytest.param([1, 2, 3], (1, 3), MaximumLengthException(), id='--- OBJECT TOO LONG ---'),
@@ -68,7 +68,7 @@ def test_type_success(new_instance, object_to_validate, reversed_validation, exp
 def test_length_failure(new_instance, object_to_validate, expected_range, expected_exception):
     try:
         new_instance.length(object_to_validate, expected_range)
-    except (ExpectedTypeException, MinimumLengthException, MaximumLengthException, TypeError,
+    except (MandatoryTypeException, MinimumLengthException, MaximumLengthException, TypeError,
             InvalidRangeValuesException, InvalidRangeLengthException) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
@@ -93,14 +93,14 @@ def test_length_success(new_instance, object_to_validate, expected_range):
 @pytest.mark.parametrize('objects,validations,expected_exception', [
     pytest.param(1, {}, TypeError(), id='--- WRONG OBJECT TYPE ---'),
     pytest.param(True, {}, TypeError()),
-    pytest.param([], 1, ExpectedTypeException(), id='--- WRONG VALIDATIONS TYPE ---'),
-    pytest.param([], False, ExpectedTypeException()),
+    pytest.param([], 1, MandatoryTypeException(), id='--- WRONG VALIDATIONS TYPE ---'),
+    pytest.param([], False, MandatoryTypeException()),
     pytest.param([1, {}], {
         'type': {'expected_type': int}
-    }, ExpectedTypeException(), id='--- TYPE VALIDATION NOT PASSED ---'),
+    }, MandatoryTypeException(), id='--- TYPE VALIDATION NOT PASSED ---'),
     pytest.param(['asdf'], {
         'type': {'expected_type': dict}
-    }, ExpectedTypeException()),
+    }, MandatoryTypeException()),
     pytest.param(['asdf'], {
         'length': {'expected_range': (None, 3)}
     }, MaximumLengthException(), id='--- LENGTH VALIDATION NOT PASSED ---'),
@@ -114,11 +114,11 @@ def test_length_success(new_instance, object_to_validate, expected_range):
     pytest.param(['asdf', 'asd', 'asdfgh', [1, 2, 3]], {
         'type': {'expected_type': str},
         'length': {'expected_range': (3, 7)},
-    }, ExpectedTypeException()),
+    }, MandatoryTypeException()),
     pytest.param(['asdf', 'asd', 'asdfgh', [1, 2, 3]], {
         'length': {'expected_range': (3, 7)},
         'type': {'expected_type': str},
-    }, ExpectedTypeException(), id='--- VALIDATING LENGTH FIRST ---'),
+    }, MandatoryTypeException(), id='--- VALIDATING LENGTH FIRST ---'),
     pytest.param(['asdf', 'asd', 'asdfgh', 1], {
         'length': {'expected_range': (3, 7)},
         'type': {'expected_type': str},
@@ -126,23 +126,23 @@ def test_length_success(new_instance, object_to_validate, expected_range):
     pytest.param([{'aaa': 111, 'bbb': 222, 'ccc': 333}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'ddd'},
-    }, ExpectedKeyException(), id='--- INCLUDING KEY_EXISTENCE VALIDATION ---'),
+    }, MandatoryKeyException(), id='--- INCLUDING KEY_EXISTENCE VALIDATION ---'),
     pytest.param([{'aaa': 111}, {'bbb': 222}, {'ccc': 333}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'bbb'},
-    }, ExpectedKeyException()),
+    }, MandatoryKeyException()),
     pytest.param([{'aaa': 111, 'bbb': 222, 'ccc': 333}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
-    }, UnexpectedKeyException(), id='--- REVERSING KEY_EXISTENCE VALIDATION ---'),
+    }, ForbiddenKeyException(), id='--- REVERSING KEY_EXISTENCE VALIDATION ---'),
     pytest.param([{'aaa': 111}, {'bbb': 222}, {'ccc': 333}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
-    }, UnexpectedKeyException()),
+    }, ForbiddenKeyException()),
     pytest.param([{'aaa': 111}, {'aaa': 222}, {'aaa': [3]}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'aaa', 'validations': {'type': {'expected_type': int}}},
-    }, ExpectedTypeException(), id='--- INCLUDING RECURSIVE VALIDATIONS ---'),
+    }, MandatoryTypeException(), id='--- INCLUDING RECURSIVE VALIDATIONS ---'),
     pytest.param([{'aaa': [1, 1, 1, 1, 1]}, {'aaa': [2, 2, 2, 2, 2, 2]}, {'aaa': [3, 3, 3]}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'aaa', 'validations': {'length': {'expected_range': (5, None)}}},
@@ -151,8 +151,8 @@ def test_length_success(new_instance, object_to_validate, expected_range):
 def test_recursive_validation_failure(new_instance, objects, validations, expected_exception):
     try:
         new_instance.recursive_validation(objects, validations)
-    except (TypeError, ExpectedTypeException, MinimumLengthException, MaximumLengthException,
-            UnexpectedKeyException, ExpectedKeyException) as current_exception:
+    except (TypeError, MandatoryTypeException, MinimumLengthException, MaximumLengthException,
+            ForbiddenKeyException, MandatoryKeyException) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
         pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
@@ -185,28 +185,28 @@ def test_recursive_validation_success(new_instance, objects, validations):
 
 
 @pytest.mark.parametrize('object_to_validate,key_name,validations,reversed_validation,expected_exception', [
-    pytest.param(1, 'asdf', {}, False, ExpectedTypeException(), id='--- WRONG OBJECT TYPE ---'),
-    pytest.param({}, 1, {}, False, ExpectedTypeException(), id='--- WRONG KEY TYPE ---'),
-    pytest.param({}, 'asdf', [], False, ExpectedTypeException(), id='--- WRONG VALIDATIONS TYPE ---'),
-    pytest.param({}, 'asdf', {}, 1, ExpectedTypeException(), id='--- WRONG REVERSED TYPE ---'),
+    pytest.param(1, 'asdf', {}, False, MandatoryTypeException(), id='--- WRONG OBJECT TYPE ---'),
+    pytest.param({}, 1, {}, False, MandatoryTypeException(), id='--- WRONG KEY TYPE ---'),
+    pytest.param({}, 'asdf', [], False, MandatoryTypeException(), id='--- WRONG VALIDATIONS TYPE ---'),
+    pytest.param({}, 'asdf', {}, 1, MandatoryTypeException(), id='--- WRONG REVERSED TYPE ---'),
     pytest.param({}, '', {}, False, MinimumLengthException(), id='--- EMPTY KEY STRING ---'),
-    pytest.param({}, 'asdf', {}, False, ExpectedKeyException(), id='--- PLAIN (NON-REVERSED) VALIDATION ---'),
-    pytest.param({'zxcv': None}, 'asdf', {}, False, ExpectedKeyException()),
-    pytest.param({'asdf': None}, 'asdf', {}, True, UnexpectedKeyException(), id='--- REVERSED VALIDATION ---'),
+    pytest.param({}, 'asdf', {}, False, MandatoryKeyException(), id='--- PLAIN (NON-REVERSED) VALIDATION ---'),
+    pytest.param({'zxcv': None}, 'asdf', {}, False, MandatoryKeyException()),
+    pytest.param({'asdf': None}, 'asdf', {}, True, ForbiddenKeyException(), id='--- REVERSED VALIDATION ---'),
     pytest.param({'asdf': 123}, 'asdf', {
         'type': {'expected_type': str}
-    }, False, ExpectedTypeException(), id='--- INCLUDING RECURSIVE VALIDATIONS ---'),
+    }, False, MandatoryTypeException(), id='--- INCLUDING RECURSIVE VALIDATIONS ---'),
     pytest.param({'asdf': 123}, 'asdf', {
         'type': {'expected_type': int, 'reversed_validation': True}
-    }, False, UnexpectedTypeException(), id='--- RECURSIVE VALIDATIONS ARE REVERSED ---'),
+    }, False, ForbiddenTypeException(), id='--- RECURSIVE VALIDATIONS ARE REVERSED ---'),
 ])
 def test_key_existence_failure(
         new_instance, object_to_validate, key_name, validations, reversed_validation, expected_exception
 ):
     try:
         new_instance.key_existence(object_to_validate, key_name, validations, reversed_validation)
-    except (ExpectedTypeException, UnexpectedTypeException, MinimumLengthException, UnexpectedKeyException,
-            ExpectedKeyException) as current_exception:
+    except (MandatoryTypeException, ForbiddenTypeException, MinimumLengthException, ForbiddenKeyException,
+            MandatoryKeyException) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
         pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')

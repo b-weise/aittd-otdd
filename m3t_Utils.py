@@ -1,8 +1,8 @@
-class UnexpectedTypeException(Exception):
+class ForbiddenTypeException(Exception):
     pass
 
 
-class ExpectedTypeException(Exception):
+class MandatoryTypeException(Exception):
     pass
 
 
@@ -22,11 +22,11 @@ class InvalidRangeValuesException(Exception):
     pass
 
 
-class UnexpectedKeyException(Exception):
+class ForbiddenKeyException(Exception):
     pass
 
 
-class ExpectedKeyException(Exception):
+class MandatoryKeyException(Exception):
     pass
 
 
@@ -58,9 +58,9 @@ class Validation:
         object_is_instance = isinstance(object_to_validate, expected_type)
 
         if not reversed_validation and not object_is_instance:  # plain (non-reversed) validation failure
-            raise ExpectedTypeException(f'Object must be of type: {expected_type.__name__}.')
+            raise MandatoryTypeException(f'Object must be of type: {expected_type.__name__}.')
         if reversed_validation and object_is_instance:  # reversed validation failure
-            raise UnexpectedTypeException(f'Object must not be of type: {expected_type.__name__}.')
+            raise ForbiddenTypeException(f'Object must not be of type: {expected_type.__name__}.')
 
     def length(self, object_to_validate, expected_range: tuple):
         """
@@ -137,6 +137,6 @@ class Validation:
             if key_is_present:  # plain (non-reversed) validation success
                 self.__validate_from_dict(object_to_validate[key_name], validations)
             else:  # plain (non-reversed) validation failure
-                raise ExpectedKeyException(f'Expected key \"{key_name}\" was not found.')
+                raise MandatoryKeyException(f'Mandatory key \"{key_name}\" was not found.')
         if reversed_validation and key_is_present:  # reversed validation failure
-            raise UnexpectedKeyException(f'Unexpected key \"{key_name}\" was found.')
+            raise ForbiddenKeyException(f'Forbidden key \"{key_name}\" was found.')
