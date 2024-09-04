@@ -1,5 +1,6 @@
 
 from collections.abc import Iterable, Sized
+from typing import Any
 
 
 class ForbiddenTypeException(Exception):
@@ -40,7 +41,7 @@ class Validation:
     All exposed methods return nothing. If something is wrong then an exception is thrown.
     """
 
-    def __validate_from_dict(self, object_to_validate, validations: dict):
+    def __validate_from_dict(self, object_to_validate: Any, validations: dict):
         """
         Validates the provided object against the specified validations.
         Note that argument types are not validated here. That's the caller's job.
@@ -52,7 +53,7 @@ class Validation:
         for method_name, method_arguments in validations.items():
             getattr(self, method_name)(object_to_validate, **method_arguments)
 
-    def __type(self, object_to_validate, expected_type: type, reversed_validation: bool = False):
+    def __type(self, object_to_validate: Any, expected_type: type, reversed_validation: bool = False):
         """
         Internal usage only.
         Checks the object type against the provided type.
@@ -67,7 +68,7 @@ class Validation:
         if reversed_validation and object_is_instance:  # reversed validation failure
             raise ForbiddenTypeException(f'Object must not be of type: {expected_type.__name__}.')
 
-    def type(self, object_to_validate, expected_type: type, reversed_validation: bool = False):
+    def type(self, object_to_validate: Any, expected_type: type, reversed_validation: bool = False):
         """
         Checks the object type against the provided type.
         :param object_to_validate: An object of any type, to be validated.
