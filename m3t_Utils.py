@@ -1,3 +1,7 @@
+
+from collections.abc import Iterable, Sized
+
+
 class ForbiddenTypeException(Exception):
     pass
 
@@ -38,11 +42,11 @@ class Validation:
 
     def __validate_from_dict(self, object_to_validate, validations: dict):
         """
-        Validates provided object against the specified validations.
+        Validates the provided object against the specified validations.
         Note that argument types are not validated here. That's the caller's job.
         :param object_to_validate: An object of any type, to be validated.
         :param validations: A dict containing Validation method names (i.e. "type") as keys
-        and dicts of parameters as their respective method arguments, not including "object_to_validate",
+        and dictionaries of parameters as their respective method arguments, not including "object_to_validate",
         as every item will be passed in its place.
         """
         for method_name, method_arguments in validations.items():
@@ -74,12 +78,13 @@ class Validation:
         self.__type(reversed_validation, bool)
         self.__type(object_to_validate, expected_type, reversed_validation)
 
-    def length(self, object_to_validate, expected_range: tuple):
+    def length(self, object_to_validate: Sized, expected_range: tuple):
         """
         Checks the length of the object against the expected range.
-        :param object_to_validate: An object of any type, to be validated.
+        :param object_to_validate: A Sized object which length is to be validated.
         :param expected_range: A tuple in the form [from, to); None means no limit in that direction.
         """
+        self.__type(object_to_validate, Sized)
         self.__type(expected_range, tuple)
         if len(expected_range) != 2:
             raise InvalidRangeLengthException(
@@ -112,14 +117,15 @@ class Validation:
                     f'Object length ({object_length}) is above the maximum expected ({max_length}).'
                 )
 
-    def recursive_validation(self, objects, validations: dict):
+    def recursive_validation(self, objects: Iterable, validations: dict):
         """
         Checks specified validations against each item in objects.
-        :param objects: An iterable of objects to be validated.
+        :param objects: An Iterable of objects to be validated.
         :param validations: A dict containing Validation method names (i.e. "type") as keys
         and dicts of parameters as their respective method arguments, not including "object_to_validate",
         as every item will be passed in its place.
         """
+        self.__type(objects, Iterable)
         self.__type(validations, dict)
         for object_to_validate in objects:
             self.__validate_from_dict(object_to_validate, validations)
@@ -129,7 +135,7 @@ class Validation:
     ):
         """
         Checks that the specified key exists in the provided dictionary.
-        :param object_to_validate: An object of any type, to be validated.
+        :param object_to_validate: A dictionary which keys are to be validated.
         :param key_name: The name of the dictionary key to validate.
         :param validations: A dict containing Validation method names (i.e. "type") as keys
         and dicts of parameters as their respective method arguments, not including "object_to_validate",

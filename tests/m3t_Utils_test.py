@@ -45,8 +45,8 @@ def test_type_success(new_instance, object_to_validate, reversed_validation, exp
 
 
 @pytest.mark.parametrize('object_to_validate,expected_range,expected_exception', [
-    pytest.param(1, (4, None), TypeError(), id='--- WRONG OBJECT TYPE ---'),
-    pytest.param(True, (4, None), TypeError()),
+    pytest.param(1, (4, None), MandatoryTypeException(), id='--- WRONG OBJECT TYPE ---'),
+    pytest.param(True, (4, None), MandatoryTypeException()),
     pytest.param([], 2, MandatoryTypeException(), id='--- WRONG RANGE TYPE ---'),
     pytest.param([], {}, MandatoryTypeException()),
     pytest.param([], 'asdf', MandatoryTypeException()),
@@ -66,8 +66,8 @@ def test_type_success(new_instance, object_to_validate, reversed_validation, exp
 def test_length_failure(new_instance, object_to_validate, expected_range, expected_exception):
     try:
         new_instance.length(object_to_validate, expected_range)
-    except (MandatoryTypeException, MinimumLengthException, MaximumLengthException, TypeError,
-            InvalidRangeValuesException, InvalidRangeLengthException) as current_exception:
+    except (MandatoryTypeException, MinimumLengthException, MaximumLengthException, InvalidRangeValuesException,
+            InvalidRangeLengthException) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
         pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
@@ -89,8 +89,8 @@ def test_length_success(new_instance, object_to_validate, expected_range):
 
 
 @pytest.mark.parametrize('objects,validations,expected_exception', [
-    pytest.param(1, {}, TypeError(), id='--- WRONG OBJECT TYPE ---'),
-    pytest.param(True, {}, TypeError()),
+    pytest.param(1, {}, MandatoryTypeException(), id='--- WRONG OBJECT TYPE ---'),
+    pytest.param(True, {}, MandatoryTypeException()),
     pytest.param([], 1, MandatoryTypeException(), id='--- WRONG VALIDATIONS TYPE ---'),
     pytest.param([], False, MandatoryTypeException()),
     pytest.param([1, {}], {
@@ -120,7 +120,7 @@ def test_length_success(new_instance, object_to_validate, expected_range):
     pytest.param(['asdf', 'asd', 'asdfgh', 1], {
         'length': {'expected_range': (3, 7)},
         'type': {'expected_type': str},
-    }, TypeError()),
+    }, MandatoryTypeException()),
     pytest.param([{'aaa': 111, 'bbb': 222, 'ccc': 333}], {
         'type': {'expected_type': dict},
         'key_existence': {'key_name': 'ddd'},
@@ -149,8 +149,8 @@ def test_length_success(new_instance, object_to_validate, expected_range):
 def test_recursive_validation_failure(new_instance, objects, validations, expected_exception):
     try:
         new_instance.recursive_validation(objects, validations)
-    except (TypeError, MandatoryTypeException, MinimumLengthException, MaximumLengthException,
-            ForbiddenKeyException, MandatoryKeyException) as current_exception:
+    except (MandatoryTypeException, MinimumLengthException, MaximumLengthException, ForbiddenKeyException,
+            MandatoryKeyException) as current_exception:
         assert isinstance(current_exception, type(expected_exception))
     else:
         pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
