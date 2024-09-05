@@ -131,9 +131,8 @@ class Validation:
         for object_to_validate in objects:
             self.__from_dict(object_to_validate, validations)
 
-    def key_existence(
-            self, object_to_validate: dict, key_name: str, validations: dict = {}, reversed_validation: bool = False
-    ):
+    def key_existence(self, object_to_validate: dict, key_name: str, validations: dict = {},
+                      reversed_validation: bool = False):
         """
         Checks that the specified key exists in the provided dictionary.
         :param object_to_validate: A dictionary which keys are to be validated.
