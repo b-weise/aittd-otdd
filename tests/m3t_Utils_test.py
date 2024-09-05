@@ -158,88 +158,88 @@ def test_length_success(new_instance, test_case: LengthMethodTestCase):
 
 
 @dataclass
-class RecursiveValidationMethodTestCase(BaseTestCase):
+class IterateMethodTestCase(BaseTestCase):
     objects: Any = None
     validations: Any = None
 
 
-RecValMethTC = RecursiveValidationMethodTestCase
+ItMethTC = IterateMethodTestCase
 
 
 @pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
-    RecValMethTC(id='wrong object type',
-                 objects=1, validations={}, expected_exception=MandatoryTypeException()),
-    RecValMethTC(objects=True, validations={}, expected_exception=MandatoryTypeException()),
-    RecValMethTC(id='wrong validations type',
-                 objects=[], validations=1, expected_exception=MandatoryTypeException()),
-    RecValMethTC(objects=[], validations=False, expected_exception=MandatoryTypeException()),
-    RecValMethTC(id='type validation not passed',
-                 objects=[1, {}], validations={'type': {'expected_type': int}},
-                 expected_exception=MandatoryTypeException()),
-    RecValMethTC(objects=['asdf'], validations={'type': {'expected_type': dict}},
-                 expected_exception=MandatoryTypeException()),
-    RecValMethTC(id='length validation not passed',
-                 objects=['asdf'], validations={'length': {'expected_range': (None, 4)}},
-                 expected_exception=MaximumLengthException()),
-    RecValMethTC(objects=['asd', 'asdfgh', 'as'], validations={'length': {'expected_range': (3, 7)}},
-                 expected_exception=MinimumLengthException()),
-    RecValMethTC(id='multiple validations',
-                 objects=['asdf', 'asd', 'asdfgh'],
-                 validations={
-                     'type': {'expected_type': str},
-                     'length': {'expected_range': (3, 6)},
-                 }, expected_exception=MaximumLengthException()),
-    RecValMethTC(objects=['asdf', 'asd', 'asdfgh', ['a', 's', 'd']],
-                 validations={
-                     'type': {'expected_type': str},
-                     'length': {'expected_range': (3, 7)},
-                 }, expected_exception=MandatoryTypeException()),
-    RecValMethTC(id='validating length first',
-                 objects=['asdf', 'asd', 'asdfgh', ['a', 's', 'd']],
-                 validations={
-                     'length': {'expected_range': (3, 7)},
-                     'type': {'expected_type': str},
-                 }, expected_exception=MandatoryTypeException()),
-    RecValMethTC(objects=['asdf', 'asd', 'asdfgh', 1],
-                 validations={
-                     'length': {'expected_range': (3, 7)},
-                     'type': {'expected_type': str},
-                 }, expected_exception=MandatoryTypeException()),
-    RecValMethTC(id='including key_existence validation',
-                 objects=[{'aaa': 111, 'bbb': 222, 'ccc': 333}],
-                 validations={
-                     'type': {'expected_type': dict},
-                     'key_existence': {'key_name': 'ddd'},
-                 }, expected_exception=MandatoryKeyException()),
-    RecValMethTC(objects=[{'aaa': 111}, {'bbb': 222}, {'ccc': 333}],
-                 validations={
-                     'key_existence': {'key_name': 'bbb'},
-                 }, expected_exception=MandatoryKeyException()),
-    RecValMethTC(id='reversing key_existence validation',
-                 objects=[{'aaa': 111, 'bbb': 222, 'ccc': 333}],
-                 validations={
-                     'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
-                 }, expected_exception=ForbiddenKeyException()),
-    RecValMethTC(objects=[{'aaa': 111}, {'bbb': 222}, {'ccc': 333}],
-                 validations={
-                     'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
-                 }, expected_exception=ForbiddenKeyException()),
-    RecValMethTC(id='including recursive validations',
-                 objects=[{'aaa': 111}, {'aaa': 222}, {'aaa': [3]}],
-                 validations={
-                     'key_existence': {'key_name': 'aaa', 'validations': {'type': {'expected_type': int}}},
-                 }, expected_exception=MandatoryTypeException()),
-    RecValMethTC(objects=[{'aaa': [1, 1, 1, 1, 1]}, {'aaa': [2, 2, 2, 2, 2, 2]}, {'aaa': [3, 3, 3]}],
-                 validations={
-                     'key_existence': {'key_name': 'aaa', 'validations': {
-                         'type': {'expected_type': list},
-                         'length': {'expected_range': (5, None)},
-                     }},
-                 }, expected_exception=MinimumLengthException()),
+    ItMethTC(id='wrong object type',
+             objects=1, validations={}, expected_exception=MandatoryTypeException()),
+    ItMethTC(objects=True, validations={}, expected_exception=MandatoryTypeException()),
+    ItMethTC(id='wrong validations type',
+             objects=[], validations=1, expected_exception=MandatoryTypeException()),
+    ItMethTC(objects=[], validations=False, expected_exception=MandatoryTypeException()),
+    ItMethTC(id='type validation not passed',
+             objects=[1, {}], validations={'type': {'expected_type': int}},
+             expected_exception=MandatoryTypeException()),
+    ItMethTC(objects=['asdf'], validations={'type': {'expected_type': dict}},
+             expected_exception=MandatoryTypeException()),
+    ItMethTC(id='length validation not passed',
+             objects=['asdf'], validations={'length': {'expected_range': (None, 4)}},
+             expected_exception=MaximumLengthException()),
+    ItMethTC(objects=['asd', 'asdfgh', 'as'], validations={'length': {'expected_range': (3, 7)}},
+             expected_exception=MinimumLengthException()),
+    ItMethTC(id='multiple validations',
+             objects=['asdf', 'asd', 'asdfgh'],
+             validations={
+                 'type': {'expected_type': str},
+                 'length': {'expected_range': (3, 6)},
+             }, expected_exception=MaximumLengthException()),
+    ItMethTC(objects=['asdf', 'asd', 'asdfgh', ['a', 's', 'd']],
+             validations={
+                 'type': {'expected_type': str},
+                 'length': {'expected_range': (3, 7)},
+             }, expected_exception=MandatoryTypeException()),
+    ItMethTC(id='validating length first',
+             objects=['asdf', 'asd', 'asdfgh', ['a', 's', 'd']],
+             validations={
+                 'length': {'expected_range': (3, 7)},
+                 'type': {'expected_type': str},
+             }, expected_exception=MandatoryTypeException()),
+    ItMethTC(objects=['asdf', 'asd', 'asdfgh', 1],
+             validations={
+                 'length': {'expected_range': (3, 7)},
+                 'type': {'expected_type': str},
+             }, expected_exception=MandatoryTypeException()),
+    ItMethTC(id='including key_existence validation',
+             objects=[{'aaa': 111, 'bbb': 222, 'ccc': 333}],
+             validations={
+                 'type': {'expected_type': dict},
+                 'key_existence': {'key_name': 'ddd'},
+             }, expected_exception=MandatoryKeyException()),
+    ItMethTC(objects=[{'aaa': 111}, {'bbb': 222}, {'ccc': 333}],
+             validations={
+                 'key_existence': {'key_name': 'bbb'},
+             }, expected_exception=MandatoryKeyException()),
+    ItMethTC(id='reversing key_existence validation',
+             objects=[{'aaa': 111, 'bbb': 222, 'ccc': 333}],
+             validations={
+                 'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
+             }, expected_exception=ForbiddenKeyException()),
+    ItMethTC(objects=[{'aaa': 111}, {'bbb': 222}, {'ccc': 333}],
+             validations={
+                 'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
+             }, expected_exception=ForbiddenKeyException()),
+    ItMethTC(id='including iterative validations',
+             objects=[{'aaa': 111}, {'aaa': 222}, {'aaa': [3]}],
+             validations={
+                 'key_existence': {'key_name': 'aaa', 'validations': {'type': {'expected_type': int}}},
+             }, expected_exception=MandatoryTypeException()),
+    ItMethTC(objects=[{'aaa': [1, 1, 1, 1, 1]}, {'aaa': [2, 2, 2, 2, 2, 2]}, {'aaa': [3, 3, 3]}],
+             validations={
+                 'key_existence': {'key_name': 'aaa', 'validations': {
+                     'type': {'expected_type': list},
+                     'length': {'expected_range': (5, None)},
+                 }},
+             }, expected_exception=MinimumLengthException()),
 ]])
-def test_recursive_validation_failure(new_instance, test_case: RecursiveValidationMethodTestCase):
+def test_iterate_failure(new_instance, test_case: IterateMethodTestCase):
     try:
-        new_instance.recursive_validation(test_case.objects, test_case.validations)
+        new_instance.iterate(test_case.objects, test_case.validations)
     except:
         assert isinstance(sys.exception(), type(test_case.expected_exception))
     else:
@@ -247,39 +247,39 @@ def test_recursive_validation_failure(new_instance, test_case: RecursiveValidati
 
 
 @pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
-    RecValMethTC(id='empty params',
-                 objects=[], validations={}),
-    RecValMethTC(id='matching types',
-                 objects=[1, 2], validations={'type': {'expected_type': int}}),
-    RecValMethTC(id='matching lengths',
-                 objects=['asdf', 'asd', 'asdfgh'], validations={'length': {'expected_range': (3, 7)}}),
-    RecValMethTC(id='matching multiple validations',
-                 objects=['asdf', 'asd', 'asdfgh'],
-                 validations={
-                     'type': {'expected_type': str},
-                     'length': {'expected_range': (3, 7)}
-                 }),
-    RecValMethTC(id='matching key_existence',
-                 objects=[{'aaa': 111}, {'aaa': 222}, {'aaa': 333}],
-                 validations={
-                     'type': {'expected_type': dict},
-                     'key_existence': {'key_name': 'aaa'},
-                 }),
-    RecValMethTC(id='matching reversed key_existence',
-                 objects=[{'aaa': 111}, {'aaa': 222}, {'aaa': 333}],
-                 validations={
-                     'type': {'expected_type': dict},
-                     'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
-                 }),
-    RecValMethTC(id='object as tuple',
-                 objects=({'aaa': 111}, {'aaa': 222}, {'aaa': 333}),
-                 validations={
-                     'type': {'expected_type': dict},
-                     'key_existence': {'key_name': 'aaa'},
-                 }),
+    ItMethTC(id='empty params',
+             objects=[], validations={}),
+    ItMethTC(id='matching types',
+             objects=[1, 2], validations={'type': {'expected_type': int}}),
+    ItMethTC(id='matching lengths',
+             objects=['asdf', 'asd', 'asdfgh'], validations={'length': {'expected_range': (3, 7)}}),
+    ItMethTC(id='matching multiple validations',
+             objects=['asdf', 'asd', 'asdfgh'],
+             validations={
+                 'type': {'expected_type': str},
+                 'length': {'expected_range': (3, 7)}
+             }),
+    ItMethTC(id='matching key_existence',
+             objects=[{'aaa': 111}, {'aaa': 222}, {'aaa': 333}],
+             validations={
+                 'type': {'expected_type': dict},
+                 'key_existence': {'key_name': 'aaa'},
+             }),
+    ItMethTC(id='matching reversed key_existence',
+             objects=[{'aaa': 111}, {'aaa': 222}, {'aaa': 333}],
+             validations={
+                 'type': {'expected_type': dict},
+                 'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
+             }),
+    ItMethTC(id='object as tuple',
+             objects=({'aaa': 111}, {'aaa': 222}, {'aaa': 333}),
+             validations={
+                 'type': {'expected_type': dict},
+                 'key_existence': {'key_name': 'aaa'},
+             }),
 ]])
-def test_recursive_validation_success(new_instance, test_case: RecursiveValidationMethodTestCase):
-    new_instance.recursive_validation(test_case.objects, test_case.validations)
+def test_iterate_success(new_instance, test_case: IterateMethodTestCase):
+    new_instance.iterate(test_case.objects, test_case.validations)
 
 
 @dataclass
@@ -310,17 +310,17 @@ KeyExMethTC = KeyExistenceMethodTestCase
     KeyExMethTC(id='reversed validation',
                 object_to_validate={'asdf': None}, key_name='asdf', reversed_validation=True,
                 expected_exception=ForbiddenKeyException()),
-    KeyExMethTC(id='including recursive validations',
+    KeyExMethTC(id='including iterative validations',
                 object_to_validate={'asdf': 123}, key_name='asdf',
                 validations={
                     'type': {'expected_type': str},
                 }, expected_exception=MandatoryTypeException()),
-    KeyExMethTC(id='including recursive validations',
+    KeyExMethTC(id='including iterative validations',
                 object_to_validate={'asdf': 123}, key_name='asdf',
                 validations={
                     'type': {'expected_type': str},
                 }, expected_exception=MandatoryTypeException()),
-    KeyExMethTC(id='recursive validations are reversed',
+    KeyExMethTC(id='iterative validations are reversed',
                 object_to_validate={'asdf': 123}, key_name='asdf',
                 validations={
                     'type': {'expected_type': int, 'reversed_validation': True}
@@ -342,12 +342,12 @@ def test_key_existence_failure(new_instance, test_case: KeyExistenceMethodTestCa
     KeyExMethTC(id='reversed validation',
                 object_to_validate={'zxcv': None}, key_name='asdf', reversed_validation=True),
     KeyExMethTC(object_to_validate={}, key_name='asdf', reversed_validation=True),
-    KeyExMethTC(id='including recursive validations',
+    KeyExMethTC(id='including iterative validations',
                 object_to_validate={'asdf': 123}, key_name='asdf',
                 validations={
                     'type': {'expected_type': int}
                 }),
-    KeyExMethTC(id='recursive validations are reversed',
+    KeyExMethTC(id='iterative validations are reversed',
                 object_to_validate={'asdf': 123}, key_name='asdf',
                 validations={
                     'type': {'expected_type': dict, 'reversed_validation': True}

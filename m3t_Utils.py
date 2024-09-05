@@ -41,7 +41,7 @@ class Validation:
     All exposed methods return nothing. If something is wrong then an exception is thrown.
     """
 
-    def __validate_from_dict(self, object_to_validate: Any, validations: dict):
+    def __from_dict(self, object_to_validate: Any, validations: dict):
         """
         Validates the provided object against the specified validations.
         Note that argument types are not validated here. That's the caller's job.
@@ -118,7 +118,7 @@ class Validation:
                     f'Object length ({object_length}) is above the maximum expected ({max_length}).'
                 )
 
-    def recursive_validation(self, objects: Iterable, validations: dict):
+    def iterate(self, objects: Iterable, validations: dict):
         """
         Checks specified validations against each item in objects.
         :param objects: An Iterable of objects to be validated.
@@ -129,7 +129,7 @@ class Validation:
         self.__type(objects, Iterable)
         self.__type(validations, dict)
         for object_to_validate in objects:
-            self.__validate_from_dict(object_to_validate, validations)
+            self.__from_dict(object_to_validate, validations)
 
     def key_existence(
             self, object_to_validate: dict, key_name: str, validations: dict = {}, reversed_validation: bool = False
@@ -154,7 +154,7 @@ class Validation:
 
         if not reversed_validation:
             if key_is_present:  # plain (non-reversed) validation success
-                self.__validate_from_dict(object_to_validate[key_name], validations)
+                self.__from_dict(object_to_validate[key_name], validations)
             else:  # plain (non-reversed) validation failure
                 raise MandatoryKeyException(f'Mandatory key \"{key_name}\" was not found.')
         if reversed_validation and key_is_present:  # reversed validation failure
