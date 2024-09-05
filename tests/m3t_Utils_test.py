@@ -1,3 +1,8 @@
+import dataclasses
+import sys
+from dataclasses import dataclass
+from typing import Any
+
 import pytest
 
 from m3t_Utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
@@ -5,224 +10,349 @@ from m3t_Utils import (Validation, ForbiddenTypeException, MandatoryTypeExceptio
                        ForbiddenKeyException, MandatoryKeyException)
 
 
+@dataclass
+class BaseTestCase:
+    """Base class for test cases."""
+    id: str | None = dataclasses.field(default=None)
+    __id: str = dataclasses.field(init=False, repr=False)
+    expected_exception: Exception | None = None
+
+    @property
+    def id(self) -> str | None:
+        """
+        Getter of the "id" property.
+        :return: A string formatted in such a way it's easily recognized in pytest logs.
+        """
+        if isinstance(self.__id, str):
+            return f'--- {self.__id} ---'.upper()
+        else:
+            return None
+
+    @id.setter
+    def id(self, provided_id: str):
+        self.__id = provided_id
+
+
 @pytest.fixture
 def new_instance():
     return Validation()
 
 
-@pytest.mark.parametrize('object_to_validate,expected_type,reversed_validation,expected_exception', [
-    pytest.param({}, 111, False, MandatoryTypeException(), id='--- WRONG EXPECTED_TYPE TYPE ---'),
-    pytest.param({}, dict, 1, MandatoryTypeException(), id='--- WRONG REVERSED_VALIDATION TYPE ---'),
-    pytest.param({}, list, False, MandatoryTypeException(), id='--- PLAIN (NON-REVERSED) MISMATCHING TYPES ---'),
-    pytest.param({}, int, False, MandatoryTypeException()),
-    pytest.param({}, str, False, MandatoryTypeException()),
-    pytest.param('', dict, False, MandatoryTypeException()),
-    pytest.param('', list, False, MandatoryTypeException()),
-    pytest.param(0, float, False, MandatoryTypeException()),
-    pytest.param(0.0, int, False, MandatoryTypeException()),
-    pytest.param(0, int, True, ForbiddenTypeException(), id='--- REVERSED MATCHING TYPES ---'),
-    pytest.param({}, dict, True, ForbiddenTypeException()),
-])
-def test_type_failure(new_instance, object_to_validate, expected_type, reversed_validation, expected_exception):
+@dataclass
+class TypeMethodTestCase(BaseTestCase):
+    object_to_validate: Any = None
+    expected_type: Any = None
+    reversed_validation: Any = False
+
+
+TypeMethTC = TypeMethodTestCase
+
+
+@pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
+    TypeMethTC(id='wrong expected_type type',
+               object_to_validate={}, expected_type=111, expected_exception=MandatoryTypeException()),
+    TypeMethTC(object_to_validate=[], expected_type='', expected_exception=MandatoryTypeException()),
+    TypeMethTC(id='wrong reversed_validation type',
+               object_to_validate=0.0, expected_type=float, reversed_validation=111,
+               expected_exception=MandatoryTypeException()),
+    TypeMethTC(object_to_validate=0, expected_type=int, reversed_validation='',
+               expected_exception=MandatoryTypeException()),
+    TypeMethTC(id='plain (non-reversed) mismatching types',
+               object_to_validate=(), expected_type=set, expected_exception=MandatoryTypeException()),
+    TypeMethTC(object_to_validate='', expected_type=list, expected_exception=MandatoryTypeException()),
+    TypeMethTC(object_to_validate={}, expected_type=str, expected_exception=MandatoryTypeException()),
+    TypeMethTC(object_to_validate=0, expected_type=float, expected_exception=MandatoryTypeException()),
+    TypeMethTC(object_to_validate=0.0, expected_type=int, expected_exception=MandatoryTypeException()),
+    TypeMethTC(id='reversed matching types',
+               object_to_validate=0, expected_type=int, reversed_validation=True,
+               expected_exception=ForbiddenTypeException()),
+    TypeMethTC(object_to_validate=0.0, expected_type=float, reversed_validation=True,
+               expected_exception=ForbiddenTypeException()),
+]])
+def test_type_failure(new_instance, test_case: TypeMethodTestCase):
     try:
-        new_instance.type(object_to_validate, expected_type, reversed_validation)
-    except (MandatoryTypeException, ForbiddenTypeException) as current_exception:
-        assert isinstance(current_exception, type(expected_exception))
+        new_instance.type(test_case.object_to_validate, test_case.expected_type, test_case.reversed_validation)
+    except:
+        assert isinstance(sys.exception(), type(test_case.expected_exception))
     else:
-        pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
+        pytest.fail(f'Exception \"{type(test_case.expected_exception).__name__}\" was expected, but found none')
 
 
-@pytest.mark.parametrize('object_to_validate,expected_type,reversed_validation', [
-    pytest.param({}, dict, False, id='--- PLAIN (NON-REVERSED) MATCHING TYPES ---'),
-    pytest.param(0, int, False),
-    pytest.param(0.0, float, False),
-    pytest.param('', str, False),
-    pytest.param('aaa', dict, True, id='--- REVERSED MISMATCHING TYPES ---'),
-    pytest.param([], str, True),
-])
-def test_type_success(new_instance, object_to_validate, reversed_validation, expected_type):
-    new_instance.type(object_to_validate, expected_type, reversed_validation)
+@pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
+    TypeMethTC(id='plain (non-reversed) matching types',
+               object_to_validate={}, expected_type=dict),
+    TypeMethTC(object_to_validate=0, expected_type=int),
+    TypeMethTC(object_to_validate=0.0, expected_type=float),
+    TypeMethTC(object_to_validate='', expected_type=str),
+    TypeMethTC(id='reversed mismatching types',
+               object_to_validate='aaa', expected_type=dict, reversed_validation=True),
+    TypeMethTC(object_to_validate=[], expected_type=int, reversed_validation=True),
+]])
+def test_type_success(new_instance, test_case: TypeMethodTestCase):
+    new_instance.type(test_case.object_to_validate, test_case.expected_type, test_case.reversed_validation)
 
 
-@pytest.mark.parametrize('object_to_validate,expected_range,expected_exception', [
-    pytest.param(1, (4, None), MandatoryTypeException(), id='--- WRONG OBJECT TYPE ---'),
-    pytest.param(True, (4, None), MandatoryTypeException()),
-    pytest.param([], 2, MandatoryTypeException(), id='--- WRONG RANGE TYPE ---'),
-    pytest.param([], {}, MandatoryTypeException()),
-    pytest.param([], 'asdf', MandatoryTypeException()),
-    pytest.param([], [], MandatoryTypeException()),
-    pytest.param('asdf', ('', None), MandatoryTypeException(), id='--- WRONG RANGE ELEMENT TYPE ---'),
-    pytest.param('asdf', (3, {}), MandatoryTypeException()),
-    pytest.param([], (), InvalidRangeLengthException(), id='--- WRONG RANGE LENGTH ---'),
-    pytest.param('asdf', (1, 2, 3), InvalidRangeLengthException()),
-    pytest.param([1, 2, 3], (1, 3), MaximumLengthException(), id='--- OBJECT TOO LONG ---'),
-    pytest.param([1, 2, 3], (None, 3), MaximumLengthException()),
-    pytest.param([1, 2, 3], (0, 2), MaximumLengthException()),
-    pytest.param([1, 2, 3], (4, None), MinimumLengthException(), id='--- OBJECT TOO SHORT ---'),
-    pytest.param({}, (4, None), MinimumLengthException()),
-    pytest.param('asdf', (3, 3), InvalidRangeValuesException(), id='--- INVALID RANGE LIMITS ---'),
-    pytest.param('asdf', (4, 3), InvalidRangeValuesException()),
-])
-def test_length_failure(new_instance, object_to_validate, expected_range, expected_exception):
+@dataclass
+class LengthMethodTestCase(BaseTestCase):
+    object_to_validate: Any = None
+    expected_range: Any = None
+
+
+LengthMethTC = LengthMethodTestCase
+
+
+@pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
+    LengthMethTC(id='wrong object type',
+                 object_to_validate=1, expected_range=(4, None), expected_exception=MandatoryTypeException()),
+    LengthMethTC(object_to_validate=True, expected_range=(4, None), expected_exception=MandatoryTypeException()),
+    LengthMethTC(id='wrong range type',
+                 object_to_validate=[], expected_range=2, expected_exception=MandatoryTypeException()),
+    LengthMethTC(object_to_validate=[], expected_range={}, expected_exception=MandatoryTypeException()),
+    LengthMethTC(object_to_validate=[], expected_range='asdf', expected_exception=MandatoryTypeException()),
+    LengthMethTC(object_to_validate=[], expected_range=[], expected_exception=MandatoryTypeException()),
+    LengthMethTC(id='wrong range element type',
+                 object_to_validate='asdf', expected_range=('', None), expected_exception=MandatoryTypeException()),
+    LengthMethTC(object_to_validate='asdf', expected_range=(3, {}), expected_exception=MandatoryTypeException()),
+    LengthMethTC(id='wrong range length',
+                 object_to_validate=[], expected_range=(), expected_exception=InvalidRangeLengthException()),
+    LengthMethTC(object_to_validate='asdf', expected_range=(1, 2, 3), expected_exception=InvalidRangeLengthException()),
+    LengthMethTC(id='object too long',
+                 object_to_validate=[1, 2, 3], expected_range=(1, 3), expected_exception=MaximumLengthException()),
+    LengthMethTC(object_to_validate=[1, 2, 3], expected_range=(None, 3), expected_exception=MaximumLengthException()),
+    LengthMethTC(object_to_validate=[1, 2, 3], expected_range=(0, 2), expected_exception=MaximumLengthException()),
+    LengthMethTC(id='object too short',
+                 object_to_validate=[1, 2, 3], expected_range=(4, None), expected_exception=MinimumLengthException()),
+    LengthMethTC(object_to_validate={}, expected_range=(4, None), expected_exception=MinimumLengthException()),
+    LengthMethTC(id='invalid range limits',
+                 object_to_validate='asdf', expected_range=(3, 3), expected_exception=InvalidRangeValuesException()),
+    LengthMethTC(object_to_validate='asdf', expected_range=(4, 3), expected_exception=InvalidRangeValuesException()),
+]])
+def test_length_failure(new_instance, test_case: LengthMethodTestCase):
     try:
-        new_instance.length(object_to_validate, expected_range)
-    except (MandatoryTypeException, MinimumLengthException, MaximumLengthException, InvalidRangeValuesException,
-            InvalidRangeLengthException) as current_exception:
-        assert isinstance(current_exception, type(expected_exception))
+        new_instance.length(test_case.object_to_validate, test_case.expected_range)
+    except:
+        assert isinstance(sys.exception(), type(test_case.expected_exception))
     else:
-        pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
+        pytest.fail(f'Exception \"{type(test_case.expected_exception).__name__}\" was expected, but found none')
 
 
-@pytest.mark.parametrize('object_to_validate,expected_range', [
-    pytest.param({}, (None, None), id='--- NO RANGE ---'),
-    pytest.param('asdf', (None, None)),
-    pytest.param([1, 2, 3], (2, 5), id='--- BOTH LIMITS ARE SPECIFIED ---'),
-    pytest.param([1, 2, 3], (3, 5)),
-    pytest.param([1, 2, 3], (3, 4)),
-    pytest.param([1, 2, 3], (1, 4)),
-    pytest.param([1, 2, 3], (None, 4), id='--- ONLY ONE LIMIT IS SPECIFIED ---'),
-    pytest.param('asdf', (3, None)),
-    pytest.param('asdf', (None, 9)),
-])
-def test_length_success(new_instance, object_to_validate, expected_range):
-    new_instance.length(object_to_validate, expected_range)
+@pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
+    LengthMethTC(id='no range',
+                 object_to_validate={}, expected_range=(None, None)),
+    LengthMethTC(object_to_validate='asdf', expected_range=(None, None)),
+    LengthMethTC(id='both limits are specified',
+                 object_to_validate=[1, 2, 3], expected_range=(2, 5)),
+    LengthMethTC(object_to_validate=[1, 2, 3], expected_range=(3, 5)),
+    LengthMethTC(object_to_validate=[1, 2, 3], expected_range=(3, 4)),
+    LengthMethTC(object_to_validate=[1, 2, 3], expected_range=(1, 4)),
+    LengthMethTC(object_to_validate=[1], expected_range=(1, 2)),
+    LengthMethTC(object_to_validate=[1], expected_range=(0, 2)),
+    LengthMethTC(id='only one limit is specified',
+                 object_to_validate=[1, 2, 3], expected_range=(None, 4)),
+    LengthMethTC(object_to_validate=[1], expected_range=(None, 3)),
+    LengthMethTC(object_to_validate='asdf', expected_range=(1, None)),
+    LengthMethTC(object_to_validate='asdf', expected_range=(4, None)),
+]])
+def test_length_success(new_instance, test_case: LengthMethodTestCase):
+    new_instance.length(test_case.object_to_validate, test_case.expected_range)
 
 
-@pytest.mark.parametrize('objects,validations,expected_exception', [
-    pytest.param(1, {}, MandatoryTypeException(), id='--- WRONG OBJECT TYPE ---'),
-    pytest.param(True, {}, MandatoryTypeException()),
-    pytest.param([], 1, MandatoryTypeException(), id='--- WRONG VALIDATIONS TYPE ---'),
-    pytest.param([], False, MandatoryTypeException()),
-    pytest.param([1, {}], {
-        'type': {'expected_type': int}
-    }, MandatoryTypeException(), id='--- TYPE VALIDATION NOT PASSED ---'),
-    pytest.param(['asdf'], {
-        'type': {'expected_type': dict}
-    }, MandatoryTypeException()),
-    pytest.param(['asdf'], {
-        'length': {'expected_range': (None, 3)}
-    }, MaximumLengthException(), id='--- LENGTH VALIDATION NOT PASSED ---'),
-    pytest.param(['asdf', 'asd', 'asdfgh'], {
-        'length': {'expected_range': (3, 6)}
-    }, MaximumLengthException()),
-    pytest.param(['asdf', 'asd', 'asdfgh'], {
-        'type': {'expected_type': str},
-        'length': {'expected_range': (3, 6)},
-    }, MaximumLengthException(), id='--- MULTIPLE VALIDATIONS ---'),
-    pytest.param(['asdf', 'asd', 'asdfgh', [1, 2, 3]], {
-        'type': {'expected_type': str},
-        'length': {'expected_range': (3, 7)},
-    }, MandatoryTypeException()),
-    pytest.param(['asdf', 'asd', 'asdfgh', [1, 2, 3]], {
-        'length': {'expected_range': (3, 7)},
-        'type': {'expected_type': str},
-    }, MandatoryTypeException(), id='--- VALIDATING LENGTH FIRST ---'),
-    pytest.param(['asdf', 'asd', 'asdfgh', 1], {
-        'length': {'expected_range': (3, 7)},
-        'type': {'expected_type': str},
-    }, MandatoryTypeException()),
-    pytest.param([{'aaa': 111, 'bbb': 222, 'ccc': 333}], {
-        'type': {'expected_type': dict},
-        'key_existence': {'key_name': 'ddd'},
-    }, MandatoryKeyException(), id='--- INCLUDING KEY_EXISTENCE VALIDATION ---'),
-    pytest.param([{'aaa': 111}, {'bbb': 222}, {'ccc': 333}], {
-        'type': {'expected_type': dict},
-        'key_existence': {'key_name': 'bbb'},
-    }, MandatoryKeyException()),
-    pytest.param([{'aaa': 111, 'bbb': 222, 'ccc': 333}], {
-        'type': {'expected_type': dict},
-        'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
-    }, ForbiddenKeyException(), id='--- REVERSING KEY_EXISTENCE VALIDATION ---'),
-    pytest.param([{'aaa': 111}, {'bbb': 222}, {'ccc': 333}], {
-        'type': {'expected_type': dict},
-        'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
-    }, ForbiddenKeyException()),
-    pytest.param([{'aaa': 111}, {'aaa': 222}, {'aaa': [3]}], {
-        'type': {'expected_type': dict},
-        'key_existence': {'key_name': 'aaa', 'validations': {'type': {'expected_type': int}}},
-    }, MandatoryTypeException(), id='--- INCLUDING RECURSIVE VALIDATIONS ---'),
-    pytest.param([{'aaa': [1, 1, 1, 1, 1]}, {'aaa': [2, 2, 2, 2, 2, 2]}, {'aaa': [3, 3, 3]}], {
-        'type': {'expected_type': dict},
-        'key_existence': {'key_name': 'aaa', 'validations': {'length': {'expected_range': (5, None)}}},
-    }, MinimumLengthException()),
-])
-def test_recursive_validation_failure(new_instance, objects, validations, expected_exception):
+@dataclass
+class RecursiveValidationMethodTestCase(BaseTestCase):
+    objects: Any = None
+    validations: Any = None
+
+
+RecValMethTC = RecursiveValidationMethodTestCase
+
+
+@pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
+    RecValMethTC(id='wrong object type',
+                 objects=1, validations={}, expected_exception=MandatoryTypeException()),
+    RecValMethTC(objects=True, validations={}, expected_exception=MandatoryTypeException()),
+    RecValMethTC(id='wrong validations type',
+                 objects=[], validations=1, expected_exception=MandatoryTypeException()),
+    RecValMethTC(objects=[], validations=False, expected_exception=MandatoryTypeException()),
+    RecValMethTC(id='type validation not passed',
+                 objects=[1, {}], validations={'type': {'expected_type': int}},
+                 expected_exception=MandatoryTypeException()),
+    RecValMethTC(objects=['asdf'], validations={'type': {'expected_type': dict}},
+                 expected_exception=MandatoryTypeException()),
+    RecValMethTC(id='length validation not passed',
+                 objects=['asdf'], validations={'length': {'expected_range': (None, 4)}},
+                 expected_exception=MaximumLengthException()),
+    RecValMethTC(objects=['asd', 'asdfgh', 'as'], validations={'length': {'expected_range': (3, 7)}},
+                 expected_exception=MinimumLengthException()),
+    RecValMethTC(id='multiple validations',
+                 objects=['asdf', 'asd', 'asdfgh'],
+                 validations={
+                     'type': {'expected_type': str},
+                     'length': {'expected_range': (3, 6)},
+                 }, expected_exception=MaximumLengthException()),
+    RecValMethTC(objects=['asdf', 'asd', 'asdfgh', ['a', 's', 'd']],
+                 validations={
+                     'type': {'expected_type': str},
+                     'length': {'expected_range': (3, 7)},
+                 }, expected_exception=MandatoryTypeException()),
+    RecValMethTC(id='validating length first',
+                 objects=['asdf', 'asd', 'asdfgh', ['a', 's', 'd']],
+                 validations={
+                     'length': {'expected_range': (3, 7)},
+                     'type': {'expected_type': str},
+                 }, expected_exception=MandatoryTypeException()),
+    RecValMethTC(objects=['asdf', 'asd', 'asdfgh', 1],
+                 validations={
+                     'length': {'expected_range': (3, 7)},
+                     'type': {'expected_type': str},
+                 }, expected_exception=MandatoryTypeException()),
+    RecValMethTC(id='including key_existence validation',
+                 objects=[{'aaa': 111, 'bbb': 222, 'ccc': 333}],
+                 validations={
+                     'type': {'expected_type': dict},
+                     'key_existence': {'key_name': 'ddd'},
+                 }, expected_exception=MandatoryKeyException()),
+    RecValMethTC(objects=[{'aaa': 111}, {'bbb': 222}, {'ccc': 333}],
+                 validations={
+                     'key_existence': {'key_name': 'bbb'},
+                 }, expected_exception=MandatoryKeyException()),
+    RecValMethTC(id='reversing key_existence validation',
+                 objects=[{'aaa': 111, 'bbb': 222, 'ccc': 333}],
+                 validations={
+                     'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
+                 }, expected_exception=ForbiddenKeyException()),
+    RecValMethTC(objects=[{'aaa': 111}, {'bbb': 222}, {'ccc': 333}],
+                 validations={
+                     'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
+                 }, expected_exception=ForbiddenKeyException()),
+    RecValMethTC(id='including recursive validations',
+                 objects=[{'aaa': 111}, {'aaa': 222}, {'aaa': [3]}],
+                 validations={
+                     'key_existence': {'key_name': 'aaa', 'validations': {'type': {'expected_type': int}}},
+                 }, expected_exception=MandatoryTypeException()),
+    RecValMethTC(objects=[{'aaa': [1, 1, 1, 1, 1]}, {'aaa': [2, 2, 2, 2, 2, 2]}, {'aaa': [3, 3, 3]}],
+                 validations={
+                     'key_existence': {'key_name': 'aaa', 'validations': {
+                         'type': {'expected_type': list},
+                         'length': {'expected_range': (5, None)},
+                     }},
+                 }, expected_exception=MinimumLengthException()),
+]])
+def test_recursive_validation_failure(new_instance, test_case: RecursiveValidationMethodTestCase):
     try:
-        new_instance.recursive_validation(objects, validations)
-    except (MandatoryTypeException, MinimumLengthException, MaximumLengthException, ForbiddenKeyException,
-            MandatoryKeyException) as current_exception:
-        assert isinstance(current_exception, type(expected_exception))
+        new_instance.recursive_validation(test_case.objects, test_case.validations)
+    except:
+        assert isinstance(sys.exception(), type(test_case.expected_exception))
     else:
-        pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
+        pytest.fail(f'Exception \"{type(test_case.expected_exception).__name__}\" was expected, but found none')
 
 
-@pytest.mark.parametrize('objects,validations', [
-    pytest.param([], {}, id='--- EMPTY PARAMS ---'),
-    pytest.param([1, 2], {'type': {'expected_type': int}}, id='--- MATCHING TYPES ---'),
-    pytest.param(['asdf', 'asd', 'asdfgh'], {
-        'length': {'expected_range': (3, 7)}
-    }, id='--- MATCHING LENGTHS ---'),
-    pytest.param(['asdf', 'asd', 'asdfgh'], {
-        'type': {'expected_type': str}, 'length': {'expected_range': (3, 7)}
-    }, id='--- MATCHING MULTIPLE VALIDATIONS ---'),
-    pytest.param([{'aaa': 111}, {'aaa': 222}, {'aaa': 333}], {
-        'type': {'expected_type': dict},
-        'key_existence': {'key_name': 'aaa', 'reversed_validation': False},
-    }, id='--- MATCHING KEY_EXISTENCE ---'),
-    pytest.param([{'aaa': 111}, {'aaa': 222}, {'aaa': 333}], {
-        'type': {'expected_type': dict},
-        'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
-    }, id='--- MATCHING REVERSED KEY_EXISTENCE ---'),
-    pytest.param(({'aaa': 111}, {'aaa': 222}, {'aaa': 333}), {
-        'type': {'expected_type': dict},
-        'key_existence': {'key_name': 'aaa', 'reversed_validation': False},
-    }, id='--- OBJECT AS TUPLE ---'),
-])
-def test_recursive_validation_success(new_instance, objects, validations):
-    new_instance.recursive_validation(objects, validations)
+@pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
+    RecValMethTC(id='empty params',
+                 objects=[], validations={}),
+    RecValMethTC(id='matching types',
+                 objects=[1, 2], validations={'type': {'expected_type': int}}),
+    RecValMethTC(id='matching lengths',
+                 objects=['asdf', 'asd', 'asdfgh'], validations={'length': {'expected_range': (3, 7)}}),
+    RecValMethTC(id='matching multiple validations',
+                 objects=['asdf', 'asd', 'asdfgh'],
+                 validations={
+                     'type': {'expected_type': str},
+                     'length': {'expected_range': (3, 7)}
+                 }),
+    RecValMethTC(id='matching key_existence',
+                 objects=[{'aaa': 111}, {'aaa': 222}, {'aaa': 333}],
+                 validations={
+                     'type': {'expected_type': dict},
+                     'key_existence': {'key_name': 'aaa'},
+                 }),
+    RecValMethTC(id='matching reversed key_existence',
+                 objects=[{'aaa': 111}, {'aaa': 222}, {'aaa': 333}],
+                 validations={
+                     'type': {'expected_type': dict},
+                     'key_existence': {'key_name': 'bbb', 'reversed_validation': True},
+                 }),
+    RecValMethTC(id='object as tuple',
+                 objects=({'aaa': 111}, {'aaa': 222}, {'aaa': 333}),
+                 validations={
+                     'type': {'expected_type': dict},
+                     'key_existence': {'key_name': 'aaa'},
+                 }),
+]])
+def test_recursive_validation_success(new_instance, test_case: RecursiveValidationMethodTestCase):
+    new_instance.recursive_validation(test_case.objects, test_case.validations)
 
 
-@pytest.mark.parametrize('object_to_validate,key_name,validations,reversed_validation,expected_exception', [
-    pytest.param(1, 'asdf', {}, False, MandatoryTypeException(), id='--- WRONG OBJECT TYPE ---'),
-    pytest.param({}, 1, {}, False, MandatoryTypeException(), id='--- WRONG KEY TYPE ---'),
-    pytest.param({}, 'asdf', [], False, MandatoryTypeException(), id='--- WRONG VALIDATIONS TYPE ---'),
-    pytest.param({}, 'asdf', {}, 1, MandatoryTypeException(), id='--- WRONG REVERSED_VALIDATION TYPE ---'),
-    pytest.param({}, 'asdf', {}, 0, MandatoryTypeException()),
-    pytest.param({}, '', {}, False, MinimumLengthException(), id='--- EMPTY KEY STRING ---'),
-    pytest.param({}, 'asdf', {}, False, MandatoryKeyException(), id='--- PLAIN (NON-REVERSED) VALIDATION ---'),
-    pytest.param({'zxcv': None}, 'asdf', {}, False, MandatoryKeyException()),
-    pytest.param({'asdf': None}, 'asdf', {}, True, ForbiddenKeyException(), id='--- REVERSED VALIDATION ---'),
-    pytest.param({'asdf': 123}, 'asdf', {
-        'type': {'expected_type': str}
-    }, False, MandatoryTypeException(), id='--- INCLUDING RECURSIVE VALIDATIONS ---'),
-    pytest.param({'asdf': 123}, 'asdf', {
-        'type': {'expected_type': int, 'reversed_validation': True}
-    }, False, ForbiddenTypeException(), id='--- RECURSIVE VALIDATIONS ARE REVERSED ---'),
-])
-def test_key_existence_failure(
-        new_instance, object_to_validate, key_name, validations, reversed_validation, expected_exception
-):
+@dataclass
+class KeyExistenceMethodTestCase(BaseTestCase):
+    object_to_validate: Any = None
+    key_name: Any = None
+    validations: Any = dataclasses.field(default_factory=dict)
+    reversed_validation: Any = False
+
+
+KeyExMethTC = KeyExistenceMethodTestCase
+
+
+@pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
+    KeyExMethTC(id='wrong object type',
+                object_to_validate=1, key_name='asdf', expected_exception=MandatoryTypeException()),
+    KeyExMethTC(id='wrong key type',
+                object_to_validate={}, key_name=1, expected_exception=MandatoryTypeException()),
+    KeyExMethTC(id='wrong validations type',
+                object_to_validate={}, key_name='asdf', validations=[], expected_exception=MandatoryTypeException()),
+    KeyExMethTC(id='wrong reversed_validation type',
+                object_to_validate={}, key_name='asdf', reversed_validation=1, expected_exception=MandatoryTypeException()),
+    KeyExMethTC(id='empty key string',
+                object_to_validate={}, key_name='', expected_exception=MinimumLengthException()),
+    KeyExMethTC(id='plain (non-reversed) validation',
+                object_to_validate={}, key_name='asdf', expected_exception=MandatoryKeyException()),
+    KeyExMethTC(object_to_validate={'zxcv': None}, key_name='asdf', expected_exception=MandatoryKeyException()),
+    KeyExMethTC(id='reversed validation',
+                object_to_validate={'asdf': None}, key_name='asdf', reversed_validation=True,
+                expected_exception=ForbiddenKeyException()),
+    KeyExMethTC(id='including recursive validations',
+                object_to_validate={'asdf': 123}, key_name='asdf',
+                validations={
+                    'type': {'expected_type': str},
+                }, expected_exception=MandatoryTypeException()),
+    KeyExMethTC(id='including recursive validations',
+                object_to_validate={'asdf': 123}, key_name='asdf',
+                validations={
+                    'type': {'expected_type': str},
+                }, expected_exception=MandatoryTypeException()),
+    KeyExMethTC(id='recursive validations are reversed',
+                object_to_validate={'asdf': 123}, key_name='asdf',
+                validations={
+                    'type': {'expected_type': int, 'reversed_validation': True}
+                }, expected_exception=ForbiddenTypeException()),
+]])
+def test_key_existence_failure(new_instance, test_case: KeyExistenceMethodTestCase):
     try:
-        new_instance.key_existence(object_to_validate, key_name, validations, reversed_validation)
-    except (MandatoryTypeException, ForbiddenTypeException, MinimumLengthException, ForbiddenKeyException,
-            MandatoryKeyException) as current_exception:
-        assert isinstance(current_exception, type(expected_exception))
+        new_instance.key_existence(test_case.object_to_validate, test_case.key_name, test_case.validations,
+                                   test_case.reversed_validation)
+    except:
+        assert isinstance(sys.exception(), type(test_case.expected_exception))
     else:
-        pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
+        pytest.fail(f'Exception \"{type(test_case.expected_exception).__name__}\" was expected, but found none')
 
 
-@pytest.mark.parametrize('object_to_validate,key_name,validations,reversed_validation', [
-    pytest.param({'asdf': None}, 'asdf', {}, False, id='--- PLAIN (NON-REVERSED) VALIDATION ---'),
-    pytest.param({'zxcv': None}, 'asdf', {}, True, id='--- REVERSED VALIDATION ---'),
-    pytest.param({}, 'asdf', {}, True),
-    pytest.param({'asdf': 123}, 'asdf', {
-        'type': {'expected_type': int}
-    }, False, id='--- INCLUDING RECURSIVE VALIDATIONS ---'),
-    pytest.param({'asdf': 123}, 'asdf', {
-        'type': {'expected_type': dict, 'reversed_validation': True}
-    }, False, id='--- RECURSIVE VALIDATIONS ARE REVERSED ---'),
-])
-def test_key_existence_success(
-        new_instance, object_to_validate, key_name, validations, reversed_validation
-):
-    new_instance.key_existence(object_to_validate, key_name, validations, reversed_validation)
+@pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
+    KeyExMethTC(id='plain (non-reversed) validation',
+                object_to_validate={'asdf': None}, key_name='asdf'),
+    KeyExMethTC(id='reversed validation',
+                object_to_validate={'zxcv': None}, key_name='asdf', reversed_validation=True),
+    KeyExMethTC(object_to_validate={}, key_name='asdf', reversed_validation=True),
+    KeyExMethTC(id='including recursive validations',
+                object_to_validate={'asdf': 123}, key_name='asdf',
+                validations={
+                    'type': {'expected_type': int}
+                }),
+    KeyExMethTC(id='recursive validations are reversed',
+                object_to_validate={'asdf': 123}, key_name='asdf',
+                validations={
+                    'type': {'expected_type': dict, 'reversed_validation': True}
+                }),
+]])
+def test_key_existence_success(new_instance, test_case: KeyExistenceMethodTestCase):
+    new_instance.key_existence(test_case.object_to_validate, test_case.key_name, test_case.validations,
+                               test_case.reversed_validation)
