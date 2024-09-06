@@ -1,57 +1,78 @@
 import logging
-
+import sys
+import dataclasses
+from dataclasses import dataclass
 import pytest
 
-from m3t_MultiRotatingLogger import MultiRotatingLogger, UnavailableNameException
-from m3t_Utils import ExpectedTypeException, ExpectedKeyException, MinimumLengthException
+from typing import Any
+from m3t_BaseTestCase import BaseTestCase
+from m3t_MultiRotatingLogger import MultiRotatingLogger, UnavailableNameException, EmptyNameException
+from m3t_Utils import MandatoryTypeException
+
+from dacite.exceptions import MissingValueError, WrongTypeError
 
 
-def get_existent_loggers():
+def get_existent_loggers() -> list[str]:
+    """
+    Generates a list of names corresponding to the loggers present in the current runtime.
+    :return: A list of logger names.
+    """
     return [name for name in logging.root.manager.loggerDict.keys()]
 
 
-@pytest.mark.parametrize('configs,expected_exception', [
-    ('aaa', ExpectedTypeException()),
-    ({'name': 'asdf'}, ExpectedTypeException()),
-    (['aaa'], ExpectedTypeException()),
-    ([{}], ExpectedKeyException()),
-    ([{}, {}], ExpectedKeyException()),
-    ([{'name': 1234}], ExpectedTypeException()),
-    ([{}, {'name': 'asdf'}], ExpectedKeyException()),
-    ([{'name': ''}, {'name': 'asdf'}], MinimumLengthException()),
-    ([{'name': 'asdf'}, {'name': ['a', 's', 'd']}], ExpectedTypeException()),
-])
-def test_instantiation_failure(configs, expected_exception):
+@dataclass
+class InstantiationTestCase(BaseTestCase):
+    configs: Any = None
+
+
+InstTC = InstantiationTestCase
+
+
+@pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
+    InstTC(id='wrong configs type',
+           configs='aaa', expected_exception=MandatoryTypeException),
+    InstTC(configs={'name': 'asdf'}, expected_exception=MandatoryTypeException),
+    InstTC(configs=['aaa'], expected_exception=MandatoryTypeException),
+    InstTC(id='no mandatory keys',
+           configs=[{}], expected_exception=MissingValueError),
+    InstTC(configs=[{}, {}], expected_exception=MissingValueError),
+    InstTC(configs=[{'aaa': 111}, {'bbb': 222}], expected_exception=MissingValueError),
+    InstTC(configs=[{'name': 'qwer'}, {'aaa': 'zxcv'}], expected_exception=MissingValueError),
+    InstTC(id='wrong mandatory key value type',
+           configs=[{'name': 1234}], expected_exception=WrongTypeError),
+    InstTC(configs=[{'name': 'asdf'}, {'name': ['a', 's', 'd']}], expected_exception=WrongTypeError),
+    InstTC(id='empty name',
+           configs=[{'name': ''}], expected_exception=EmptyNameException),
+]])
+def test_instantiation_failure(test_case: InstantiationTestCase):
     try:
-        MultiRotatingLogger(configs)
-    except (ExpectedTypeException, ExpectedKeyException, MinimumLengthException) as current_exception:
-        assert isinstance(current_exception, type(expected_exception))
+        MultiRotatingLogger(test_case.configs)
+    except:
+        assert isinstance(sys.exception(), test_case.expected_exception)
     else:
-        pytest.fail(f'Exception \"{type(expected_exception).__name__}\" was expected, but found none')
+        pytest.fail(f'Exception \"{test_case.expected_exception.__name__}\" was expected, but found none')
 
 
-@pytest.mark.parametrize('logger_names', [
-    (['a']),
-    (['aa']),
-    (['aaa', 'b']),
-    (('aaaa', 'bb')),
-])
-def test_instantiation_success(logger_names):
-    MultiRotatingLogger([{'name': name} for name in logger_names])
-    for name in logger_names:
+@pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
+    InstTC(configs=[{'name': 'a'}]),
+    InstTC(configs=[{'name': 'aaa'}, {'name': 'bbb'}]),
+]])
+def test_instantiation_success(test_case: InstantiationTestCase):
+    MultiRotatingLogger(test_case.configs)
+    for name in map(lambda config: config['name'], test_case.configs):
         assert name in get_existent_loggers()
 
 
-@pytest.mark.parametrize('logger_name', [
-    ('a111'),
-    ('b_2_2_2'),
-    ('c.3.3.3'),
-])
-def test_logger_override_exception(logger_name):
+@pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
+    InstTC(configs=[{'name': 'aaa111'}], expected_exception=UnavailableNameException),
+    InstTC(configs=[{'name': 'bbb_222'}], expected_exception=UnavailableNameException),
+    InstTC(configs=[{'name': 'ccc.333'}], expected_exception=UnavailableNameException),
+]])
+def test_logger_override_exception(test_case: InstantiationTestCase):
     try:
-        logging.getLogger(logger_name)
-        MultiRotatingLogger([{'name': logger_name}])
-    except UnavailableNameException as current_exception:
-        assert isinstance(current_exception, type(UnavailableNameException()))
+        logging.getLogger(test_case.configs[0]['name'])
+        MultiRotatingLogger(test_case.configs)
+    except:
+        assert isinstance(sys.exception(), test_case.expected_exception)
     else:
-        pytest.fail(f'Exception \"{type(UnavailableNameException()).__name__}\" was expected, but found none')
+        pytest.fail(f'Exception \"{test_case.expected_exception.__name__}\" was expected, but found none')
