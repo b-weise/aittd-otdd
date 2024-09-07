@@ -46,6 +46,12 @@ TypeMethTC = TypeMethodTestCase
                expected_exception=ForbiddenTypeException),
     TypeMethTC(object_to_validate=0.0, expected_type=float, reversed_validation=True,
                expected_exception=ForbiddenTypeException),
+    TypeMethTC(id='specifing multiple types',
+               object_to_validate='', expected_type=int | float, expected_exception=MandatoryTypeException),
+    TypeMethTC(object_to_validate={}, expected_type=set | list, expected_exception=MandatoryTypeException),
+    TypeMethTC(id='specifing multiple types, reversed',
+               object_to_validate='', expected_type=str | list, reversed_validation=True, expected_exception=ForbiddenTypeException),
+    TypeMethTC(object_to_validate=True, expected_type=list | bool, reversed_validation=True, expected_exception=ForbiddenTypeException),
 ]])
 def test_type_failure(new_instance, test_case: TypeMethodTestCase):
     try:
@@ -65,6 +71,12 @@ def test_type_failure(new_instance, test_case: TypeMethodTestCase):
     TypeMethTC(id='reversed mismatching types',
                object_to_validate='aaa', expected_type=dict, reversed_validation=True),
     TypeMethTC(object_to_validate=[], expected_type=int, reversed_validation=True),
+    TypeMethTC(id='specifing multiple types',
+               object_to_validate='', expected_type=int | str),
+    TypeMethTC(object_to_validate={}, expected_type=dict | list),
+    TypeMethTC(id='specifing multiple types, reversed',
+               object_to_validate=1, expected_type=dict | list, reversed_validation=True),
+    TypeMethTC(object_to_validate='', expected_type=int | float, reversed_validation=True),
 ]])
 def test_type_success(new_instance, test_case: TypeMethodTestCase):
     new_instance.type(test_case.object_to_validate, test_case.expected_type, test_case.reversed_validation)

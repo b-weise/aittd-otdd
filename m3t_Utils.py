@@ -1,5 +1,6 @@
 
 from collections.abc import Iterable, Sized
+from types import UnionType
 from typing import Any
 
 
@@ -53,29 +54,29 @@ class Validation:
         for method_name, method_arguments in validations.items():
             getattr(self, method_name)(object_to_validate, **method_arguments)
 
-    def __type(self, object_to_validate: Any, expected_type: type, reversed_validation: bool = False):
+    def __type(self, object_to_validate: Any, expected_type: type | UnionType, reversed_validation: bool = False):
         """
         Internal usage only.
-        Checks the object type against the provided type.
+        Checks the object type against the provided types.
         :param object_to_validate: An object of any type, to be validated.
-        :param expected_type: The type that is expected.
+        :param expected_type: The type that is expected, or a UnionType of them.
         :param reversed_validation: If True, the validation is reversed.
         """
         object_is_instance = isinstance(object_to_validate, expected_type)
 
         if not reversed_validation and not object_is_instance:  # plain (non-reversed) validation failure
-            raise MandatoryTypeException(f'Object must be of type: {expected_type.__name__}.')
+            raise MandatoryTypeException(f'Object must be of type: {expected_type}.')
         if reversed_validation and object_is_instance:  # reversed validation failure
-            raise ForbiddenTypeException(f'Object must not be of type: {expected_type.__name__}.')
+            raise ForbiddenTypeException(f'Object must not be of type: {expected_type}.')
 
-    def type(self, object_to_validate: Any, expected_type: type, reversed_validation: bool = False):
+    def type(self, object_to_validate: Any, expected_type: type | UnionType, reversed_validation: bool = False):
         """
         Checks the object type against the provided type.
         :param object_to_validate: An object of any type, to be validated.
-        :param expected_type: The type that is expected.
+        :param expected_type: The type that is expected, or a UnionType of them.
         :param reversed_validation: If True, the validation is reversed.
         """
-        self.__type(expected_type, type)
+        self.__type(expected_type, type | UnionType)
         self.__type(reversed_validation, bool)
         self.__type(object_to_validate, expected_type, reversed_validation)
 
