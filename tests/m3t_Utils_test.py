@@ -1,10 +1,10 @@
+import copy
 import dataclasses
 import sys
-from dataclasses import dataclass
-from typing import Any, Optional, Type
 from collections.abc import Iterable, Callable
+from dataclasses import dataclass
 from types import UnionType
-import copy
+from typing import Any, Optional, Type
 
 import pytest
 from optree.functools import partial
@@ -25,12 +25,18 @@ TUPLES = [(), (0,), ('',), ([],), (True,), (0, '', [], True)]
 RANGES = [range(0), range(9), range(11, 22), range(11, 99, 11)]
 LAMBDAS = [lambda a: a, lambda a, b: (a, b)]
 TYPES = [str, int, float, bool, dict, set, list, tuple, range, Callable, type, UnionType, Iterable]
-UNIONTYPES = [str | int, int | float, float | bool, bool | dict, dict | set, set | list, list | tuple, tuple | range, range | Callable, Callable | type, type | UnionType, UnionType | str]
+UNIONTYPES = [str | int, int | float, float | bool, bool | dict, dict | set, set | list, list | tuple, tuple | range,
+              range | Callable, Callable | type, type | UnionType, UnionType | str]
 ITERABLES = STRS + DICTS + SETS + LISTS + TUPLES + RANGES
 CALLABLES = LAMBDAS + TYPES
 LITERALS = STRS + INTS + FLOATS + BOOLS + DICTS + SETS + LISTS + TUPLES + RANGES + LAMBDAS + TYPES + UNIONTYPES
-TYPES_LITERALS_ZIP = [TYPES, [STRS, INTS, FLOATS, BOOLS, DICTS, SETS, LISTS, TUPLES, RANGES, CALLABLES, TYPES, UNIONTYPES, ITERABLES]]
-UNIONTYPES_LITERALS_ZIP = [UNIONTYPES, [STRS + INTS, INTS + FLOATS, FLOATS + BOOLS, BOOLS + DICTS, DICTS + SETS, SETS + LISTS, LISTS + TUPLES, TUPLES + RANGES, RANGES + LAMBDAS, LAMBDAS + TYPES, TYPES + UNIONTYPES, UNIONTYPES + STRS]]
+TYPES_LITERALS_ZIP = [TYPES,
+                      [STRS, INTS, FLOATS, BOOLS, DICTS, SETS, LISTS, TUPLES, RANGES, CALLABLES, TYPES, UNIONTYPES,
+                       ITERABLES]]
+UNIONTYPES_LITERALS_ZIP = [UNIONTYPES,
+                           [STRS + INTS, INTS + FLOATS, FLOATS + BOOLS, BOOLS + DICTS, DICTS + SETS, SETS + LISTS,
+                            LISTS + TUPLES, TUPLES + RANGES, RANGES + LAMBDAS, LAMBDAS + TYPES, TYPES + UNIONTYPES,
+                            UNIONTYPES + STRS]]
 
 
 def diff(list_a: list, list_b: list) -> list:
@@ -106,21 +112,26 @@ generate_match_TypeMethTCs = partial(generate_match_related_test_cases,
     *generate_match_TypeMethTCs(match_types=True, reversed_validation=True, expected_exception=ForbiddenTypeException),
     TypeMethTC(id='specifing multiple types',
                object_to_validate='', expected_type=int | float, expected_exception=MandatoryTypeException),
-    *[TypeMethTC(object_to_validate=non_float_callable_literal, expected_type=float | Callable, expected_exception=MandatoryTypeException)
+    *[TypeMethTC(object_to_validate=non_float_callable_literal, expected_type=float | Callable,
+                 expected_exception=MandatoryTypeException)
       for non_float_callable_literal in diff(LITERALS, FLOATS + CALLABLES)],
-    *[TypeMethTC(object_to_validate=non_dict_list_literal, expected_type=dict | list, expected_exception=MandatoryTypeException)
+    *[TypeMethTC(object_to_validate=non_dict_list_literal, expected_type=dict | list,
+                 expected_exception=MandatoryTypeException)
       for non_dict_list_literal in diff(LITERALS, DICTS + LISTS)],
-    *[TypeMethTC(object_to_validate=non_iterable_bool_literal, expected_type=Iterable | bool, expected_exception=MandatoryTypeException)
+    *[TypeMethTC(object_to_validate=non_iterable_bool_literal, expected_type=Iterable | bool,
+                 expected_exception=MandatoryTypeException)
       for non_iterable_bool_literal in diff(LITERALS, ITERABLES + BOOLS)],
     TypeMethTC(id='specifing multiple types, reversed',
-               object_to_validate='', expected_type=str | list, reversed_validation=True, expected_exception=ForbiddenTypeException),
+               object_to_validate='', expected_type=str | list, reversed_validation=True,
+               expected_exception=ForbiddenTypeException),
     *[TypeMethTC(object_to_validate=set_uniontype_literal, expected_type=set | UnionType, reversed_validation=True,
                  expected_exception=ForbiddenTypeException)
       for set_uniontype_literal in SETS + UNIONTYPES],
     *[TypeMethTC(object_to_validate=str_bool_literal, expected_type=str | bool, reversed_validation=True,
                  expected_exception=ForbiddenTypeException)
       for str_bool_literal in STRS + BOOLS],
-    *[TypeMethTC(object_to_validate=callable_iterable_literal, expected_type=Callable | Iterable, reversed_validation=True,
+    *[TypeMethTC(object_to_validate=callable_iterable_literal, expected_type=Callable | Iterable,
+                 reversed_validation=True,
                  expected_exception=ForbiddenTypeException)
       for callable_iterable_literal in CALLABLES + ITERABLES],
 ]])
@@ -159,7 +170,8 @@ LengthMethTC = LengthMethodTestCase
 @pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
     LengthMethTC(id='wrong object type',
                  object_to_validate=1, expected_range=(4, None), expected_exception=MandatoryTypeException),
-    *[LengthMethTC(object_to_validate=non_iterable_literal, expected_range=(4, None), expected_exception=MandatoryTypeException)
+    *[LengthMethTC(object_to_validate=non_iterable_literal, expected_range=(4, None),
+                   expected_exception=MandatoryTypeException)
       for non_iterable_literal in diff(LITERALS, ITERABLES)],
     LengthMethTC(id='wrong range type',
                  object_to_validate=[], expected_range=2, expected_exception=MandatoryTypeException),
@@ -448,11 +460,14 @@ generate_match_KeyExMethTCs = partial(generate_match_related_test_cases,
       for non_str_literal in diff(LITERALS, STRS)],
     KeyExMethTC(id='wrong validations type',
                 object_to_validate={}, key_name='asdf', validations=[], expected_exception=MandatoryTypeException),
-    *[KeyExMethTC(object_to_validate={}, key_name='asdf', validations=non_dict_literal, expected_exception=MandatoryTypeException)
+    *[KeyExMethTC(object_to_validate={}, key_name='asdf', validations=non_dict_literal,
+                  expected_exception=MandatoryTypeException)
       for non_dict_literal in diff(LITERALS, DICTS)],
     KeyExMethTC(id='wrong reversed_validation type',
-                object_to_validate={}, key_name='asdf', reversed_validation=1, expected_exception=MandatoryTypeException),
-    *[KeyExMethTC(object_to_validate={}, key_name='asdf', reversed_validation=non_bool_literal, expected_exception=MandatoryTypeException)
+                object_to_validate={}, key_name='asdf', reversed_validation=1,
+                expected_exception=MandatoryTypeException),
+    *[KeyExMethTC(object_to_validate={}, key_name='asdf', reversed_validation=non_bool_literal,
+                  expected_exception=MandatoryTypeException)
       for non_bool_literal in diff(LITERALS, BOOLS)],
     KeyExMethTC(id='empty key string',
                 object_to_validate={}, key_name='', expected_exception=MinimumLengthException),
