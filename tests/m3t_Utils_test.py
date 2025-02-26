@@ -28,8 +28,8 @@ UNIONTYPES = [str | int, int | float, float | bool, bool | dict, dict | set, set
 ITERABLES = STRS + DICTS + SETS + LISTS + TUPLES + RANGES
 CALLABLES = LAMBDAS + TYPES
 LITERALS = STRS + INTS + FLOATS + BOOLS + DICTS + SETS + LISTS + TUPLES + RANGES + LAMBDAS + TYPES + UNIONTYPES
-TYPES_VALUES_ZIP = [TYPES, [STRS, INTS, FLOATS, BOOLS, DICTS, SETS, LISTS, TUPLES, RANGES, CALLABLES, TYPES, UNIONTYPES, ITERABLES]]
-UNIONTYPES_VALUES_ZIP = [UNIONTYPES, [STRS + INTS, INTS + FLOATS, FLOATS + BOOLS, BOOLS + DICTS, DICTS + SETS, SETS + LISTS, LISTS + TUPLES, TUPLES + RANGES, RANGES + LAMBDAS, LAMBDAS + TYPES, TYPES + UNIONTYPES, UNIONTYPES + STRS]]
+TYPES_LITERALS_ZIP = [TYPES, [STRS, INTS, FLOATS, BOOLS, DICTS, SETS, LISTS, TUPLES, RANGES, CALLABLES, TYPES, UNIONTYPES, ITERABLES]]
+UNIONTYPES_LITERALS_ZIP = [UNIONTYPES, [STRS + INTS, INTS + FLOATS, FLOATS + BOOLS, BOOLS + DICTS, DICTS + SETS, SETS + LISTS, LISTS + TUPLES, TUPLES + RANGES, RANGES + LAMBDAS, LAMBDAS + TYPES, TYPES + UNIONTYPES, UNIONTYPES + STRS]]
 
 
 def diff(list_a: list, list_b: list) -> list:
@@ -55,19 +55,19 @@ def generate_type_method_test_cases(match_types: bool,
                                     reversed_validation: bool = False,
                                     expected_exception: Optional[Type[Exception]] = None):
     cases_list = []
-    for local_zip_values in [TYPES_VALUES_ZIP, UNIONTYPES_VALUES_ZIP]:
-        local_zip_values = copy.deepcopy(local_zip_values)
+    for zipped_lists in [TYPES_LITERALS_ZIP, UNIONTYPES_LITERALS_ZIP]:
+        local_zipped_lists = copy.deepcopy(zipped_lists)
         if not match_types:
-            types_list, values_list = local_zip_values
+            types_list, literals_lists = local_zipped_lists
             offset = 2
             for iteration in range(offset):
-                last_values = values_list.pop()
-                values_list.insert(0, last_values)
+                last_list = literals_lists.pop()
+                literals_lists.insert(0, last_list)
                 # last group is inserted first, otherwise range type will be paired with iterables group (and match)
-            local_zip_values = [types_list, values_list]
-        for type_item, obj_list in zip(*local_zip_values):
-            for obj_item in obj_list:
-                cases_list.append(TypeMethTC(object_to_validate=obj_item,
+            local_zipped_lists = [types_list, literals_lists]
+        for type_item, literals_list in zip(*local_zipped_lists):
+            for literal_item in literals_list:
+                cases_list.append(TypeMethTC(object_to_validate=literal_item,
                                              expected_type=type_item,
                                              reversed_validation=reversed_validation,
                                              expected_exception=expected_exception))
@@ -340,9 +340,9 @@ def test_iterate_failure(new_instance, test_case: IterateMethodTestCase):
     ItMethTC(id='matching types',
              objects=[1, 2], validations={'type': {'expected_type': int}}),
     *[ItMethTC(objects=matching_values, validations={'type': {'expected_type': matching_type}})
-      for matching_type, matching_values in zip(*TYPES_VALUES_ZIP)],
+      for matching_type, matching_values in zip(*TYPES_LITERALS_ZIP)],
     *[ItMethTC(objects=matching_values, validations={'type': {'expected_type': matching_uniontype}})
-      for matching_uniontype, matching_values in zip(*UNIONTYPES_VALUES_ZIP)],
+      for matching_uniontype, matching_values in zip(*UNIONTYPES_LITERALS_ZIP)],
     ItMethTC(id='matching lengths',
              objects=['asdf', 'asd', 'asdfgh'], validations={'length': {'expected_range': (3, 7)}}),
     *[ItMethTC(objects=['asdf', 'asd', 'asdfgh'], validations={'length': {'expected_range': compliant_range}})
@@ -418,7 +418,7 @@ def generate_key_existence_method_test_cases(match_types: bool,
                                              reversed_iterative_validation: bool = False,
                                              expected_exception: Optional[Type[Exception]] = None):
     cases_list = []
-    for local_zip_values in [TYPES_VALUES_ZIP, UNIONTYPES_VALUES_ZIP]:
+    for local_zip_values in [TYPES_LITERALS_ZIP, UNIONTYPES_LITERALS_ZIP]:
         local_zip_values = copy.deepcopy(local_zip_values)
         if not match_types:
             types_list, values_list = local_zip_values
