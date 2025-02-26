@@ -1,7 +1,7 @@
 """
 This was the starting point of a tool designed to build objects out of dictionaries. This way, project settings
 could be stored in JSON files, and loaded into objects that define each setting's specification.
-Then I discovered Dacite, which accomplishes exactly that.
+Then I discovered Dacite (https://github.com/konradhalas/dacite), which accomplishes exactly that.
 Nonetheless, it served to establish the guidelines I'd follow while migrating the rest of the code using TDD.
 """
 
