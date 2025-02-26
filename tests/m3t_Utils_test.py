@@ -7,6 +7,7 @@ from types import UnionType
 import copy
 
 import pytest
+from optree.functools import partial
 
 from m3t_BaseTestCase import BaseTestCase
 from m3t_Utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
@@ -48,12 +49,11 @@ class TypeMethodTestCase(BaseTestCase):
     reversed_validation: Any = False
 
 
-TypeMethTC = TypeMethodTestCase
-
-
-def generate_type_method_test_cases(match_types: bool,
-                                    reversed_validation: bool = False,
-                                    expected_exception: Optional[Type[Exception]] = None):
+def generate_match_related_test_cases(test_case_builder: Callable,
+                                      match_types: bool,
+                                      reversed_validation: bool = False,
+                                      reversed_iterative_validation: bool = False,
+                                      expected_exception: Optional[Type[Exception]] = None):
     cases_list = []
     for zipped_lists in [TYPES_LITERALS_ZIP, UNIONTYPES_LITERALS_ZIP]:
         local_zipped_lists = copy.deepcopy(zipped_lists)
@@ -67,11 +67,23 @@ def generate_type_method_test_cases(match_types: bool,
             local_zipped_lists = [types_list, literals_lists]
         for type_item, literals_list in zip(*local_zipped_lists):
             for literal_item in literals_list:
-                cases_list.append(TypeMethTC(object_to_validate=literal_item,
-                                             expected_type=type_item,
-                                             reversed_validation=reversed_validation,
-                                             expected_exception=expected_exception))
+                cases_list.append(test_case_builder(object_to_validate=literal_item,
+                                                    expected_type=type_item,
+                                                    reversed_validation=reversed_validation,
+                                                    reversed_iterative_validation=reversed_iterative_validation,
+                                                    expected_exception=expected_exception))
     return cases_list
+
+
+TypeMethTC = TypeMethodTestCase
+
+generate_match_TypeMethTCs = partial(generate_match_related_test_cases,
+                                     test_case_builder=lambda **kwargs: (
+                                         TypeMethTC(object_to_validate=kwargs['object_to_validate'],
+                                                    expected_type=kwargs['expected_type'],
+                                                    reversed_validation=kwargs['reversed_validation'],
+                                                    expected_exception=kwargs['expected_exception'])
+                                     ))
 
 
 @pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
@@ -87,12 +99,11 @@ def generate_type_method_test_cases(match_types: bool,
       for non_bool_literal in diff(LITERALS, BOOLS)],
     TypeMethTC(id='plain (non-reversed) mismatching types',
                object_to_validate='', expected_type=int, expected_exception=MandatoryTypeException),
-    *generate_type_method_test_cases(match_types=False, expected_exception=MandatoryTypeException),
+    *generate_match_TypeMethTCs(match_types=False, expected_exception=MandatoryTypeException),
     TypeMethTC(id='reversed matching types',
                object_to_validate='', expected_type=str, reversed_validation=True,
                expected_exception=ForbiddenTypeException),
-    *generate_type_method_test_cases(match_types=True, reversed_validation=True,
-                                     expected_exception=ForbiddenTypeException),
+    *generate_match_TypeMethTCs(match_types=True, reversed_validation=True, expected_exception=ForbiddenTypeException),
     TypeMethTC(id='specifing multiple types',
                object_to_validate='', expected_type=int | float, expected_exception=MandatoryTypeException),
     *[TypeMethTC(object_to_validate=non_float_callable_literal, expected_type=float | Callable, expected_exception=MandatoryTypeException)
@@ -127,10 +138,10 @@ def test_type_failure(new_instance, test_case: TypeMethodTestCase):
                object_to_validate={}, expected_type=dict),
     TypeMethTC(object_to_validate=True, expected_type=int),  # WATCH OUT: bool is a subclass of int
     TypeMethTC(object_to_validate=type, expected_type=Callable),  # WATCH OUT: types are callables
-    *generate_type_method_test_cases(match_types=True),
+    *generate_match_TypeMethTCs(match_types=True),
     TypeMethTC(id='reversed mismatching types',
                object_to_validate='aaa', expected_type=dict, reversed_validation=True),
-    *generate_type_method_test_cases(match_types=False, reversed_validation=True),
+    *generate_match_TypeMethTCs(match_types=False, reversed_validation=True),
 ]])
 def test_type_success(new_instance, test_case: TypeMethodTestCase):
     new_instance.type(test_case.object_to_validate, test_case.expected_type, test_case.reversed_validation)
@@ -412,33 +423,18 @@ class KeyExistenceMethodTestCase(BaseTestCase):
 
 KeyExMethTC = KeyExistenceMethodTestCase
 
-
-def generate_key_existence_method_test_cases(match_types: bool,
-                                             reversed_validation: bool = False,
-                                             reversed_iterative_validation: bool = False,
-                                             expected_exception: Optional[Type[Exception]] = None):
-    cases_list = []
-    for local_zip_values in [TYPES_LITERALS_ZIP, UNIONTYPES_LITERALS_ZIP]:
-        local_zip_values = copy.deepcopy(local_zip_values)
-        if not match_types:
-            types_list, values_list = local_zip_values
-            offset = 2
-            for iteration in range(offset):
-                last_values = values_list.pop()
-                values_list.insert(0, last_values)
-                # last group is inserted first, otherwise range type will be paired with iterables group (and match)
-            local_zip_values = [types_list, values_list]
-        for type_item, obj_list in zip(*local_zip_values):
-            for obj_item in obj_list:
-                cases_list.append(KeyExMethTC(object_to_validate={'aaa': obj_item}, key_name='aaa',
-                                              validations={
-                                                  'type': {
-                                                      'expected_type': type_item,
-                                                      'reversed_validation': reversed_iterative_validation
-                                                  }
-                                              }, reversed_validation=reversed_validation,
-                                              expected_exception=expected_exception))
-    return cases_list
+generate_match_KeyExMethTCs = partial(generate_match_related_test_cases,
+                                      test_case_builder=lambda **kwargs: (
+                                          KeyExMethTC(
+                                              object_to_validate={'aaa': kwargs['object_to_validate']},
+                                              key_name='aaa',
+                                              validations={'type': {
+                                                  'expected_type': kwargs['expected_type'],
+                                                  'reversed_validation': kwargs['reversed_iterative_validation']
+                                              }},
+                                              reversed_validation=kwargs['reversed_validation'],
+                                              expected_exception=kwargs['expected_exception'])
+                                      ))
 
 
 @pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
@@ -478,14 +474,14 @@ def generate_key_existence_method_test_cases(match_types: bool,
                 validations={
                     'type': {'expected_type': str},
                 }, expected_exception=MandatoryTypeException),
-    *generate_key_existence_method_test_cases(match_types=False, expected_exception=MandatoryTypeException),
+    *generate_match_KeyExMethTCs(match_types=False, expected_exception=MandatoryTypeException),
     KeyExMethTC(id='iterative validations are reversed',
                 object_to_validate={'asdf': 123}, key_name='asdf',
                 validations={
                     'type': {'expected_type': int, 'reversed_validation': True}
                 }, expected_exception=ForbiddenTypeException),
-    *generate_key_existence_method_test_cases(match_types=True, reversed_iterative_validation=True,
-                                              expected_exception=ForbiddenTypeException),
+    *generate_match_KeyExMethTCs(match_types=True, reversed_iterative_validation=True,
+                                 expected_exception=ForbiddenTypeException),
 ]])
 def test_key_existence_failure(new_instance, test_case: KeyExistenceMethodTestCase):
     try:
@@ -511,13 +507,13 @@ def test_key_existence_failure(new_instance, test_case: KeyExistenceMethodTestCa
                 validations={
                     'type': {'expected_type': int}
                 }),
-    *generate_key_existence_method_test_cases(match_types=True),
+    *generate_match_KeyExMethTCs(match_types=True),
     KeyExMethTC(id='iterative validations are reversed',
                 object_to_validate={'asdf': 123}, key_name='asdf',
                 validations={
                     'type': {'expected_type': dict, 'reversed_validation': True}
                 }),
-    *generate_key_existence_method_test_cases(match_types=False, reversed_iterative_validation=True),
+    *generate_match_KeyExMethTCs(match_types=False, reversed_iterative_validation=True),
 ]])
 def test_key_existence_success(new_instance, test_case: KeyExistenceMethodTestCase):
     new_instance.key_existence(test_case.object_to_validate, test_case.key_name, test_case.validations,
