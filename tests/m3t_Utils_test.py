@@ -51,20 +51,26 @@ class TypeMethodTestCase(BaseTestCase):
 TypeMethTC = TypeMethodTestCase
 
 
-def generate_type_method_test_cases(match_types: bool, reversed_validation: bool = False, expected_exception: Optional[Type[Exception]] = None):
+def generate_type_method_test_cases(match_types: bool,
+                                    reversed_validation: bool = False,
+                                    expected_exception: Optional[Type[Exception]] = None):
     cases_list = []
     for local_zip_values in [TYPES_VALUES_ZIP, UNIONTYPES_VALUES_ZIP]:
         local_zip_values = copy.deepcopy(local_zip_values)
         if not match_types:
             types_list, values_list = local_zip_values
-            for iteration in range(2):
+            offset = 2
+            for iteration in range(offset):
                 last_values = values_list.pop()
                 values_list.insert(0, last_values)
                 # last group is inserted first, otherwise range type will be paired with iterables group (and match)
             local_zip_values = [types_list, values_list]
         for type_item, obj_list in zip(*local_zip_values):
             for obj_item in obj_list:
-                cases_list.append(TypeMethTC(object_to_validate=obj_item, expected_type=type_item, reversed_validation=reversed_validation, expected_exception=expected_exception))
+                cases_list.append(TypeMethTC(object_to_validate=obj_item,
+                                             expected_type=type_item,
+                                             reversed_validation=reversed_validation,
+                                             expected_exception=expected_exception))
     return cases_list
 
 
@@ -407,13 +413,17 @@ class KeyExistenceMethodTestCase(BaseTestCase):
 KeyExMethTC = KeyExistenceMethodTestCase
 
 
-def generate_key_existence_method_test_cases(match_types: bool, reversed_validation: bool = False, reversed_iterative_validation: bool = False, expected_exception: Optional[Type[Exception]] = None):
+def generate_key_existence_method_test_cases(match_types: bool,
+                                             reversed_validation: bool = False,
+                                             reversed_iterative_validation: bool = False,
+                                             expected_exception: Optional[Type[Exception]] = None):
     cases_list = []
     for local_zip_values in [TYPES_VALUES_ZIP, UNIONTYPES_VALUES_ZIP]:
         local_zip_values = copy.deepcopy(local_zip_values)
         if not match_types:
             types_list, values_list = local_zip_values
-            for iteration in range(2):
+            offset = 2
+            for iteration in range(offset):
                 last_values = values_list.pop()
                 values_list.insert(0, last_values)
                 # last group is inserted first, otherwise range type will be paired with iterables group (and match)
