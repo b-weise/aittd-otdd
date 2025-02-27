@@ -3,11 +3,11 @@ import dataclasses
 import sys
 from collections.abc import Iterable, Callable
 from dataclasses import dataclass
+from functools import partial
 from types import UnionType
 from typing import Any
 
 import pytest
-from optree.functools import partial
 
 from m3t_BaseTestCase import BaseTestCase
 from m3t_Utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
@@ -40,6 +40,12 @@ UNIONTYPES_LITERALS_ZIP = [UNIONTYPES,
 
 
 def diff(list_a: list, list_b: list) -> list:
+    """
+    Subtracts list_b from list_a.
+    :param list_a: The minuend.
+    :param list_b: The subtrahend.
+    :return: The result.
+    """
     return list(filter(lambda item: (item not in list_b), list_a))
 
 
@@ -58,16 +64,24 @@ class TypeMethodTestCase(BaseTestCase):
 def generate_match_related_test_cases(test_case_builder: Callable,
                                       match_types: bool,
                                       **kwargs):
+    """
+    Generates a test case for every single combination of a given type (or UnionType) and its respective literals,
+    ensuring that either all or none of them match.
+    :param test_case_builder: A builder used to generate each individual test case.
+    :param match_types: A flag indicating whether each type (or UnionType) should match all of its respective literals,
+    or none of them.
+    :return: A list containing all generated test cases.
+    """
     cases_list = []
     for zipped_lists in [TYPES_LITERALS_ZIP, UNIONTYPES_LITERALS_ZIP]:
         local_zipped_lists = copy.deepcopy(zipped_lists)
         if not match_types:
             types_list, literals_lists = local_zipped_lists
             offset = 2
+            # An offset of 2 ensures that no types (or UnionTypes) are paired with compatible literals.
             for iteration in range(offset):
                 last_list = literals_lists.pop()
                 literals_lists.insert(0, last_list)
-                # last group is inserted first, otherwise range type will be paired with iterables group (and match)
             local_zipped_lists = [types_list, literals_lists]
         for type_item, literals_list in zip(*local_zipped_lists):
             for literal_item in literals_list:
