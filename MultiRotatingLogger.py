@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Optional, Iterable
 import dacite
 
-from m3t_Utils import Validation
+from Utils import Validation
 
 
 @dataclass

@@ -9,10 +9,10 @@ from typing import Any
 
 import pytest
 
-from m3t_BaseTestCase import BaseTestCase
-from m3t_Utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
-                       MaximumLengthException, InvalidRangeLengthException, InvalidRangeValuesException,
-                       ForbiddenKeyException, MandatoryKeyException)
+from BaseTestCase import BaseTestCase
+from Utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
+                   MaximumLengthException, InvalidRangeLengthException, InvalidRangeValuesException,
+                   ForbiddenKeyException, MandatoryKeyException)
 
 STRS = ['', 'aaa', 'abcdefghijklmnopqrstuvwxyz', '0123456789', ',.;:<>()[]{}']
 INTS = [0, 1, 111, 222, 9999999]
