@@ -19,7 +19,7 @@ class BaseTestCase:
         :return: If "id" is set, returns a string formatted for easy recognition in pytest logs;
         otherwise, returns None to suppress pytest's default printing.
         """
-        if isinstance(self.__id, str):
+        if isinstance(self.__id, str) and self.__id != '':
             return f'--- {self.__id} ---'.upper()
         else:
             return None
