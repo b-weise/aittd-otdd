@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-from BaseTestCase import BaseTestCase
-from Utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
+from baseTestCase import BaseTestCase
+from utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
                    MaximumLengthException, InvalidRangeLengthException, InvalidRangeValuesException,
                    ForbiddenKeyException, MandatoryKeyException)
 

@@ -5,9 +5,9 @@ from dataclasses import dataclass
 import pytest
 
 from typing import Any
-from BaseTestCase import BaseTestCase
-from MultiRotatingLogger import MultiRotatingLogger, UnavailableNameException, EmptyNameException
-from Utils import MandatoryTypeException
+from baseTestCase import BaseTestCase
+from multiRotatingLogger import MultiRotatingLogger, UnavailableNameException, EmptyNameException
+from utils import MandatoryTypeException
 
 from dacite.exceptions import MissingValueError, WrongTypeError
 
