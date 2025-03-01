@@ -5,7 +5,7 @@ from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import partial
 from types import UnionType
-from typing import Any
+from typing import Any, Type
 
 import pytest
 
@@ -52,6 +52,24 @@ def diff(list_a: list, list_b: list) -> list:
 @pytest.fixture
 def new_instance():
     return Validation()
+
+
+def exception_checker(case_runner: Callable, expected_exception: Type[Exception]):
+    """
+    Evaluates the given test case and verifies that its execution matches expected behavior.
+    :param case_runner: The test case to evaluate.
+    :param expected_exception: The expected exception, or None if no exception should be raised.
+    """
+    try:
+        case_runner()
+    except:
+        if expected_exception is None:
+            raise sys.exception()
+        else:
+            assert isinstance(sys.exception(), expected_exception)
+    else:
+        if expected_exception is not None:
+            pytest.fail(f'Exception \"{expected_exception.__name__}\" was expected but not raised.')
 
 
 @dataclass
@@ -144,12 +162,9 @@ generate_match_TypeMethTCs = partial(generate_match_related_test_cases,
       for callable_iterable_literal in CALLABLES + ITERABLES],
 ]])
 def test_type_failure(new_instance, test_case: TypeMethodTestCase):
-    try:
+    exception_checker(lambda: (
         new_instance.type(test_case.object_to_validate, test_case.expected_type, test_case.reversed_validation)
-    except:
-        assert isinstance(sys.exception(), test_case.expected_exception)
-    else:
-        pytest.fail(f'Exception \"{test_case.expected_exception.__name__}\" was expected, but found none')
+    ), test_case.expected_exception)
 
 
 @pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
@@ -215,12 +230,9 @@ LengthMethTC = LengthMethodTestCase
       for invalid_range_values in [(0, 0), (-1, -1), (1, 0), (5, 3), (8, 5)]],
 ]])
 def test_length_failure(new_instance, test_case: LengthMethodTestCase):
-    try:
+    exception_checker(lambda: (
         new_instance.length(test_case.object_to_validate, test_case.expected_range)
-    except:
-        assert isinstance(sys.exception(), test_case.expected_exception)
-    else:
-        pytest.fail(f'Exception \"{test_case.expected_exception.__name__}\" was expected, but found none')
+    ), test_case.expected_exception)
 
 
 @pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
@@ -357,12 +369,9 @@ ItMethTC = IterateMethodTestCase
       for high_min_length_range in [(4, None), (4, 6), (5, 7), (6, 8)]],
 ]])
 def test_iterate_failure(new_instance, test_case: IterateMethodTestCase):
-    try:
+    exception_checker(lambda: (
         new_instance.iterate(test_case.objects, test_case.validations)
-    except:
-        assert isinstance(sys.exception(), test_case.expected_exception)
-    else:
-        pytest.fail(f'Exception \"{test_case.expected_exception.__name__}\" was expected, but found none')
+    ), test_case.expected_exception)
 
 
 @pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
@@ -508,13 +517,10 @@ generate_match_KeyExMethTCs = partial(generate_match_related_test_cases,
                                  expected_exception=ForbiddenTypeException),
 ]])
 def test_key_existence_failure(new_instance, test_case: KeyExistenceMethodTestCase):
-    try:
+    exception_checker(lambda: (
         new_instance.key_existence(test_case.object_to_validate, test_case.key_name, test_case.validations,
                                    test_case.reversed_validation)
-    except:
-        assert isinstance(sys.exception(), test_case.expected_exception)
-    else:
-        pytest.fail(f'Exception \"{test_case.expected_exception.__name__}\" was expected, but found none')
+    ), test_case.expected_exception)
 
 
 @pytest.mark.parametrize('test_case', [pytest.param(test_case, id=test_case.id) for test_case in [
