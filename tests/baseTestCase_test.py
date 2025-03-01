@@ -2,7 +2,7 @@ from typing import Optional, Type
 
 import pytest
 
-from baseTestCase import BaseTestCase
+from source.baseTestCase import BaseTestCase
 
 
 @pytest.fixture

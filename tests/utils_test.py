@@ -9,10 +9,10 @@ from typing import Any
 
 import pytest
 
-from baseTestCase import BaseTestCase
-from utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
-                   MaximumLengthException, InvalidRangeLengthException, InvalidRangeValuesException,
-                   ForbiddenKeyException, MandatoryKeyException)
+from source.baseTestCase import BaseTestCase
+from source.utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
+                          MaximumLengthException, InvalidRangeLengthException, InvalidRangeValuesException,
+                          ForbiddenKeyException, MandatoryKeyException)
 
 STRS = ['', 'aaa', 'abcdefghijklmnopqrstuvwxyz', '0123456789', ',.;:<>()[]{}']
 INTS = [0, 1, 111, 222, 9999999]
