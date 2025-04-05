@@ -1,11 +1,10 @@
 import copy
 import dataclasses
-import sys
 from collections.abc import Iterable, Callable
 from dataclasses import dataclass
 from functools import partial
 from types import UnionType
-from typing import Any, Type
+from typing import Any
 
 import pytest
 
