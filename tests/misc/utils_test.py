@@ -8,10 +8,10 @@ from typing import Any
 
 import pytest
 
-from source.baseTestCase import BaseTestCase
-from source.utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
-                          MaximumLengthException, InvalidRangeLengthException, InvalidRangeValuesException,
-                          ForbiddenKeyException, MandatoryKeyException)
+from source.libs.baseTestCase import BaseTestCase
+from source.misc.utils import (Validation, ForbiddenTypeException, MandatoryTypeException, MinimumLengthException,
+                               MaximumLengthException, InvalidRangeLengthException, InvalidRangeValuesException,
+                               ForbiddenKeyException, MandatoryKeyException)
 
 STRS = ['', 'aaa', 'abcdefghijklmnopqrstuvwxyz', '0123456789', ',.;:<>()[]{}']
 INTS = [0, 1, 111, 222, 9999999]
