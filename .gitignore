@@ -1,6 +1,7 @@
 .idea
 .nix-shell-inputs
 __pycache__
+.pytest_cache
 shell.nix
 *.swp
 .venv
