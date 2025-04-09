@@ -2,7 +2,7 @@ import dataclasses
 from typing import Optional, Type
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class BaseTestCase:
     """
     Base class for test cases.
