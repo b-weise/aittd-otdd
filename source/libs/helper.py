@@ -43,19 +43,6 @@ class Helper:
         :return: A stringified version of the input if applicable; otherwise, the original input.
         """
 
-        def stringify(value: Any) -> Any:
-            """
-            Converts the given object to its string representation.
-            :param value: The object to be stringified.
-            :return: A stringified version of the object if applicable; otherwise, the original object.
-            """
-            if isinstance(value, Path | datetime):
-                return str(value)
-            elif isinstance(value, Callable):
-                return Helper.get_fully_qualified_name(value)
-            else:
-                return value
-
         def walk_objects(input_obj: Any, callback: Callable) -> Any:
             """
             Recursively traverses the given object in a depth-first fashion,
@@ -72,5 +59,18 @@ class Helper:
                 return list(map(lambda item: (walk_objects(item, callback)), input_obj))
             else:
                 return callback(input_obj)
+
+        def stringify(value: Any) -> Any:
+            """
+            Converts the given object to its string representation.
+            :param value: The object to be stringified.
+            :return: A stringified version of the object if applicable; otherwise, the original object.
+            """
+            if isinstance(value, Path | datetime):
+                return str(value)
+            elif isinstance(value, Callable):
+                return Helper.get_fully_qualified_name(value)
+            else:
+                return value
 
         return walk_objects(raw_input, stringify)

@@ -103,12 +103,10 @@ SObjectsMethTC = StringifyObjectsMethodTestCase
                    expected_output={'aaa': 'builtins.divmod', 'bbb': [[1, 'builtins.min'], [2, 'builtins.max']]}),
     SObjectsMethTC(input_value={'a': {'a': {'a': 'a'}}}, expected_output={'a': {'a': {'a': 'a'}}}),
     SObjectsMethTC(input_value={'a': {'a': {'a': min}}}, expected_output={'a': {'a': {'a': 'builtins.min'}}}),
-    SObjectsMethTC(input_value={'aaa': divmod,
-                                'bbb': [(datetime(2025, 12, 1), min),
-                                        (Path('zxcv'), max)]},
-                   expected_output={'aaa': 'builtins.divmod',
-                                    'bbb': [['2025-12-01 00:00:00', 'builtins.min'],
-                                            ['zxcv', 'builtins.max']]}),
+    SObjectsMethTC(input_value={'aaa': divmod, 'bbb': [(datetime(2025, 12, 1), min),
+                                                       (Path('zxcv'), max)]},
+                   expected_output={'aaa': 'builtins.divmod', 'bbb': [['2025-12-01 00:00:00', 'builtins.min'],
+                                                                      ['zxcv', 'builtins.max']]}),
 ]])
 def test_stringify_objects_success(test_case: StringifyObjectsMethodTestCase):
     computed_output = Helper.stringify_objects(test_case.input_value)
