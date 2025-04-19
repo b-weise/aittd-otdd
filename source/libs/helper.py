@@ -1,3 +1,4 @@
+import hashlib
 import sys
 from collections.abc import Callable, Sequence
 from datetime import datetime
@@ -74,3 +75,46 @@ class Helper:
                 return value
 
         return walk_objects(raw_input, stringify)
+
+    @staticmethod
+    def generate_hash(data: Any, hash_encoding: str = 'utf-8') -> str:
+        """
+        Generates a consistent MD5 hash from the given object and its contents.
+        Elements are sorted to ensure deterministic output for objects with the same data in different orders.
+        :param data: The object to hash.
+        :param hash_encoding: The encoding used to encode the hash input.
+        :return: An MD5 hash string representing the object.
+        """
+
+        def contents_as_single_string(input_obj: Any) -> str:
+            """
+            Recursively traverses the object in a depth-first manner to build a string representation of its contents.
+            Contents are sorted to ensure that objects differing only in element order produce the same output.
+            :param input_obj: The object to represent.
+            :return: A consistent string representation of the object.
+            """
+            contents_list = []
+            if isinstance(input_obj, str):
+                return input_obj
+            elif isinstance(input_obj, dict):
+                input_obj = {key: (contents_as_single_string(value))
+                             for key, value in zip(input_obj.keys(), input_obj.values())}
+                contents_list = list(map(lambda key, value: f'{key}={value}',
+                                         input_obj.keys(), input_obj.values()))
+            elif isinstance(input_obj, Sequence):
+                input_obj = list(map(lambda item: (contents_as_single_string(item)), input_obj))
+                contents_list = input_obj
+            else:
+                return str(input_obj)
+
+            sorted_list = sorted(contents_list)
+            contents_string = ','.join(sorted_list)
+            return contents_string
+
+        stringified_data = Helper.stringify_objects(data)
+        contents_string = contents_as_single_string(stringified_data)
+        encoded_string = contents_string.encode(hash_encoding)
+        md5_hasher = hashlib.md5()
+        md5_hasher.update(encoded_string)
+        md5_generated_hash = md5_hasher.hexdigest()
+        return md5_generated_hash
