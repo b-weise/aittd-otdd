@@ -5,6 +5,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from source.structs.customTypes import DateRange
+
 
 class Helper:
     """
@@ -67,7 +69,7 @@ class Helper:
             :param value: The object to be stringified.
             :return: A stringified version of the object if applicable; otherwise, the original object.
             """
-            if isinstance(value, Path | datetime):
+            if isinstance(value, Path | datetime | DateRange):
                 return str(value)
             elif isinstance(value, Callable):
                 return Helper.get_fully_qualified_name(value)
