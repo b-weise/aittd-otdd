@@ -14,6 +14,64 @@ class Helper:
     """
 
     @staticmethod
+    def __walk_objects(input_obj: Any, callback: Callable) -> Any:
+        """
+        Recursively traverses the given object in a depth-first fashion,
+        invoking the callback on each plain value encountered.
+        :param input_obj: The object to traverse.
+        :param callback: A callback used to process plain values.
+        :return: Either, a dictionary or list with every value processed by the callback,
+        or the output of the callback itself.
+        """
+        if isinstance(input_obj, dict):
+            return {key: (Helper.__walk_objects(value, callback))
+                    for key, value in zip(input_obj.keys(), input_obj.values())}
+        elif isinstance(input_obj, Sequence) and not isinstance(input_obj, str):
+            return list(map(lambda item: (Helper.__walk_objects(item, callback)), input_obj))
+        else:
+            return callback(input_obj)
+
+    @staticmethod
+    def __stringify(value: Any) -> Any:
+        """
+        Converts the given object to its string representation.
+        :param value: The object to be stringified.
+        :return: A stringified version of the object if applicable; otherwise, the original object.
+        """
+        if isinstance(value, Path | datetime | DateRange):
+            return str(value)
+        elif isinstance(value, Callable):
+            return Helper.get_fully_qualified_name(value)
+        else:
+            return value
+
+    @staticmethod
+    def __contents_as_single_string(input_obj: Any) -> str:
+        """
+        Recursively traverses the object in a depth-first manner to build a string representation of its contents.
+        Contents are sorted to ensure that objects differing only in element order produce the same output.
+        :param input_obj: The object to represent.
+        :return: A consistent string representation of the object.
+        """
+        contents_list = []
+        if isinstance(input_obj, str):
+            return input_obj
+        elif isinstance(input_obj, dict):
+            input_obj = {key: (Helper.__contents_as_single_string(value))
+                         for key, value in zip(input_obj.keys(), input_obj.values())}
+            contents_list = list(map(lambda key, value: f'{key}={value}',
+                                     input_obj.keys(), input_obj.values()))
+        elif isinstance(input_obj, Sequence):
+            input_obj = list(map(lambda item: (Helper.__contents_as_single_string(item)), input_obj))
+            contents_list = input_obj
+        else:
+            return str(input_obj)
+
+        sorted_list = sorted(contents_list)
+        contents_string = ','.join(sorted_list)
+        return contents_string
+
+    @staticmethod
     def get_fully_qualified_name(obj: Callable) -> str:
         """
         Returns the fully qualified name of the given callable, including its module name.
@@ -45,38 +103,7 @@ class Helper:
         :param raw_input: The object to be stringified, or a container that will be traversed recursively.
         :return: A stringified version of the input if applicable; otherwise, the original input.
         """
-
-        def walk_objects(input_obj: Any, callback: Callable) -> Any:
-            """
-            Recursively traverses the given object in a depth-first fashion,
-            invoking the callback on each plain value encountered.
-            :param input_obj: The object to traverse.
-            :param callback: A callback used to process plain values.
-            :return: Either, a dictionary or list with every value processed by the callback,
-            or the output of the callback itself.
-            """
-            if isinstance(input_obj, dict):
-                return {key: (walk_objects(value, callback))
-                        for key, value in zip(input_obj.keys(), input_obj.values())}
-            elif isinstance(input_obj, Sequence) and not isinstance(input_obj, str):
-                return list(map(lambda item: (walk_objects(item, callback)), input_obj))
-            else:
-                return callback(input_obj)
-
-        def stringify(value: Any) -> Any:
-            """
-            Converts the given object to its string representation.
-            :param value: The object to be stringified.
-            :return: A stringified version of the object if applicable; otherwise, the original object.
-            """
-            if isinstance(value, Path | datetime | DateRange):
-                return str(value)
-            elif isinstance(value, Callable):
-                return Helper.get_fully_qualified_name(value)
-            else:
-                return value
-
-        return walk_objects(raw_input, stringify)
+        return Helper.__walk_objects(raw_input, Helper.__stringify)
 
     @staticmethod
     def generate_hash(data: Any, hash_encoding: str = 'utf-8') -> str:
@@ -87,34 +114,8 @@ class Helper:
         :param hash_encoding: The encoding used to encode the hash input.
         :return: An MD5 hash string representing the object.
         """
-
-        def contents_as_single_string(input_obj: Any) -> str:
-            """
-            Recursively traverses the object in a depth-first manner to build a string representation of its contents.
-            Contents are sorted to ensure that objects differing only in element order produce the same output.
-            :param input_obj: The object to represent.
-            :return: A consistent string representation of the object.
-            """
-            contents_list = []
-            if isinstance(input_obj, str):
-                return input_obj
-            elif isinstance(input_obj, dict):
-                input_obj = {key: (contents_as_single_string(value))
-                             for key, value in zip(input_obj.keys(), input_obj.values())}
-                contents_list = list(map(lambda key, value: f'{key}={value}',
-                                         input_obj.keys(), input_obj.values()))
-            elif isinstance(input_obj, Sequence):
-                input_obj = list(map(lambda item: (contents_as_single_string(item)), input_obj))
-                contents_list = input_obj
-            else:
-                return str(input_obj)
-
-            sorted_list = sorted(contents_list)
-            contents_string = ','.join(sorted_list)
-            return contents_string
-
         stringified_data = Helper.stringify_objects(data)
-        contents_string = contents_as_single_string(stringified_data)
+        contents_string = Helper.__contents_as_single_string(stringified_data)
         encoded_string = contents_string.encode(hash_encoding)
         md5_hasher = hashlib.md5()
         md5_hasher.update(encoded_string)
