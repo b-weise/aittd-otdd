@@ -11,6 +11,7 @@ class DateRange:
     A simple data container that stores a range of dates, accessed through the "fm" and "to" properties.
     Either or both properties can be None.
     """
+
     def __init__(self, fm: Optional[datetime] = None, to: Optional[datetime] = None):
         self.__to = None
         self.__fm = None

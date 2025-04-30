@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from pandas import DatetimeIndex
+from source.structs.customTypes import DateRange
 
 
 @dataclass
@@ -28,7 +28,7 @@ class TrainingParams:
     CompileOptimizer: Callable
     LayerStack: dict[int, LayerParams]
     DatasetPath: Path
-    DatasetTimeFilter: DatetimeIndex
+    DatasetTimeFilter: DateRange
     DatasetShuffle: bool
     DatasetBatchSize: int
 
@@ -54,6 +54,6 @@ class TrainingParamsCombinations:
     CompileOptimizer: Sequence[Callable]
     LayerStack: Sequence[dict[int, LayerParamsCombinations]]
     DatasetPath: Sequence[Path]
-    DatasetTimeFilter: Sequence[DatetimeIndex]
+    DatasetTimeFilter: Sequence[DateRange]
     DatasetShuffle: Sequence[bool]
     DatasetBatchSize: Sequence[int]
