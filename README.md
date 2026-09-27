@@ -1,7 +1,9 @@
 # AI Trainer, Tester and Deployer - Over-engineered TDD version
 
+> This is handwritten, pre-AI work!
+
 > [!WARNING]
-> This repo is incomplete and currently under active development!
+> This repo is still incomplete!
 
 ---
 
